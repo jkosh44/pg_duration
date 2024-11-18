@@ -1,0 +1,1 @@
+A PostgreSQL extension for a Duration type.
