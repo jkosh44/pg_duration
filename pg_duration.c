@@ -42,8 +42,8 @@ Datum
 duration_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
-	struct Node	   *escontext = fcinfo->context;
-	Duration   result;
+	struct Node *escontext = fcinfo->context;
+	Duration	result;
 	struct pg_itm_in tt,
 			   *itm_in = &tt;
 	int			dtype;
@@ -101,13 +101,13 @@ duration_in(PG_FUNCTION_ARGS)
 Datum
 duration_out(PG_FUNCTION_ARGS)
 {
-	Duration   span = PG_GETARG_DURATION(0);
+	Duration	duration = PG_GETARG_DURATION(0);
 	char	   *result;
 	struct pg_itm tt,
 			   *itm = &tt;
 	char		buf[MAXDATELEN + 1];
 
-	duration2itm(span, itm);
+	duration2itm(duration, itm);
 	EncodeInterval(itm, IntervalStyle, buf);
 
 	result = pstrdup(buf);
@@ -118,7 +118,7 @@ Datum
 duration_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	Duration   duration = pq_getmsgint64(buf);
+	Duration	duration = pq_getmsgint64(buf);
 
 	PG_RETURN_DURATION(duration);
 }
@@ -126,7 +126,7 @@ duration_recv(PG_FUNCTION_ARGS)
 Datum
 duration_send(PG_FUNCTION_ARGS)
 {
-	Duration   duration = PG_GETARG_DURATION(0);
+	Duration	duration = PG_GETARG_DURATION(0);
 	StringInfoData buf;
 
 	pq_begintypsend(&buf);
@@ -140,7 +140,7 @@ duration_send(PG_FUNCTION_ARGS)
  * wide enough for all possible conversion results.
  */
 void
-duration2itm(Duration span, struct pg_itm *itm)
+duration2itm(Duration duration, struct pg_itm *itm)
 {
 	TimeOffset	time;
 	TimeOffset	tfrac;
@@ -148,7 +148,7 @@ duration2itm(Duration span, struct pg_itm *itm)
 	itm->tm_year = 0;
 	itm->tm_mon = 0;
 	itm->tm_mday = 0;
-	time = span;
+	time = duration;
 
 	tfrac = time / USECS_PER_HOUR;
 	time -= tfrac * USECS_PER_HOUR;
@@ -167,11 +167,11 @@ duration2itm(Duration span, struct pg_itm *itm)
  * Returns 0 if OK, -1 on invalid units.
  */
 int
-itmin2duration(struct pg_itm_in *itm_in, Duration *span)
+itmin2duration(struct pg_itm_in *itm_in, Duration *duration)
 {
 	if (itm_in->tm_year != 0 || itm_in->tm_mon != 0 || itm_in->tm_mday != 0)
 		return -1;
-	*span = itm_in->tm_usec;
+	*duration = itm_in->tm_usec;
 	return 0;
 }
 
@@ -182,10 +182,10 @@ itmin2duration(struct pg_itm_in *itm_in, Duration *span)
 Datum
 duration_cmp(PG_FUNCTION_ARGS)
 {
-	Duration		   a = PG_GETARG_DURATION(0);
-	Duration		   b = PG_GETARG_DURATION(1);
+	Duration	a = PG_GETARG_DURATION(0);
+	Duration	b = PG_GETARG_DURATION(1);
 
-	if (a < b) 
+	if (a < b)
 		PG_RETURN_INT32(-1);
 	else if (a > b)
 		PG_RETURN_INT32(1);
