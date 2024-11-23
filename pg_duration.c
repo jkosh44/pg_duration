@@ -7,6 +7,7 @@
 
 #include "postgres.h"
 
+#include "common/int.h"
 #include "fmgr.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
@@ -33,6 +34,13 @@ PG_FUNCTION_INFO_V1(duration_gt);
 PG_FUNCTION_INFO_V1(duration_ge);
 PG_FUNCTION_INFO_V1(duration_eq);
 PG_FUNCTION_INFO_V1(duration_ne);
+
+/*
+** Arithmetic operators
+*/
+PG_FUNCTION_INFO_V1(duration_um);
+PG_FUNCTION_INFO_V1(duration_pl);
+PG_FUNCTION_INFO_V1(duration_mi);
 
 /*****************************************************************************
  * Input/Output functions
@@ -252,4 +260,52 @@ duration_ne(PG_FUNCTION_ARGS)
 														PG_GETARG_DATUM(1)));
 
 	PG_RETURN_BOOL(cmp != 0);
+}
+
+/*****************************************************************************
+ *				   Arithmetic operators
+ *****************************************************************************/
+
+Datum
+duration_um(PG_FUNCTION_ARGS)
+{
+	Duration	duration = PG_GETARG_DURATION(0);
+	Duration	result;
+
+	if (pg_sub_s64_overflow(INT64CONST(0), duration, &result))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("duration out of range")));
+
+	PG_RETURN_DURATION(-result);
+}
+
+Datum
+duration_pl(PG_FUNCTION_ARGS)
+{
+	Duration	duration1 = PG_GETARG_DURATION(0);
+	Duration	duration2 = PG_GETARG_DURATION(1);
+	Duration	result;
+
+	if (pg_add_s64_overflow(duration1, duration2, &result))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("duration out of range")));
+
+	PG_RETURN_DURATION(result);
+}
+
+Datum
+duration_mi(PG_FUNCTION_ARGS)
+{
+	Duration	duration1 = PG_GETARG_DURATION(0);
+	Duration	duration2 = PG_GETARG_DURATION(1);
+	Duration	result;
+
+	if (pg_sub_s64_overflow(duration1, duration2, &result))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("duration out of range")));
+
+	PG_RETURN_DURATION(result);
 }
