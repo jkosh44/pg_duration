@@ -23,6 +23,17 @@ PG_FUNCTION_INFO_V1(duration_out);
 PG_FUNCTION_INFO_V1(duration_recv);
 PG_FUNCTION_INFO_V1(duration_send);
 
+/*
+** Comparison operators
+*/
+PG_FUNCTION_INFO_V1(duration_cmp);
+PG_FUNCTION_INFO_V1(duration_lt);
+PG_FUNCTION_INFO_V1(duration_le);
+PG_FUNCTION_INFO_V1(duration_gt);
+PG_FUNCTION_INFO_V1(duration_ge);
+PG_FUNCTION_INFO_V1(duration_eq);
+PG_FUNCTION_INFO_V1(duration_ne);
+
 /*****************************************************************************
  * Input/Output functions
  *****************************************************************************/
@@ -162,4 +173,83 @@ itmin2duration(struct pg_itm_in *itm_in, Duration *span)
 		return -1;
 	*span = itm_in->tm_usec;
 	return 0;
+}
+
+/*****************************************************************************
+ *				   Comparison operators
+ *****************************************************************************/
+
+Datum
+duration_cmp(PG_FUNCTION_ARGS)
+{
+	Duration		   a = PG_GETARG_DURATION(0);
+	Duration		   b = PG_GETARG_DURATION(1);
+
+	if (a < b) 
+		PG_RETURN_INT32(-1);
+	else if (a > b)
+		PG_RETURN_INT32(1);
+	else
+		PG_RETURN_INT32(0);
+}
+
+Datum
+duration_lt(PG_FUNCTION_ARGS)
+{
+	int			cmp = DatumGetInt32(DirectFunctionCall2(duration_cmp,
+														PG_GETARG_DATUM(0),
+														PG_GETARG_DATUM(1)));
+
+	PG_RETURN_BOOL(cmp < 0);
+}
+
+Datum
+duration_le(PG_FUNCTION_ARGS)
+{
+	int			cmp = DatumGetInt32(DirectFunctionCall2(duration_cmp,
+														PG_GETARG_DATUM(0),
+														PG_GETARG_DATUM(1)));
+
+	PG_RETURN_BOOL(cmp <= 0);
+}
+
+Datum
+duration_gt(PG_FUNCTION_ARGS)
+{
+	int			cmp = DatumGetInt32(DirectFunctionCall2(duration_cmp,
+														PG_GETARG_DATUM(0),
+														PG_GETARG_DATUM(1)));
+
+	PG_RETURN_BOOL(cmp > 0);
+}
+
+Datum
+duration_ge(PG_FUNCTION_ARGS)
+{
+	int			cmp = DatumGetInt32(DirectFunctionCall2(duration_cmp,
+														PG_GETARG_DATUM(0),
+														PG_GETARG_DATUM(1)));
+
+	PG_RETURN_BOOL(cmp >= 0);
+}
+
+
+Datum
+duration_eq(PG_FUNCTION_ARGS)
+{
+	int			cmp = DatumGetInt32(DirectFunctionCall2(duration_cmp,
+														PG_GETARG_DATUM(0),
+														PG_GETARG_DATUM(1)));
+
+	PG_RETURN_BOOL(cmp == 0);
+}
+
+Datum
+duration_ne(PG_FUNCTION_ARGS)
+{
+	int			cmp = DatumGetInt32(DirectFunctionCall2(duration_cmp,
+														PG_GETARG_DATUM(0),
+														PG_GETARG_DATUM(1)));
+
+	PG_RETURN_BOOL(cmp != 0);
 }
