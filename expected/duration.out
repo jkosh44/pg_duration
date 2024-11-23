@@ -1,0 +1,296 @@
+CREATE EXTENSION pg_duration;
+-- Valid duration input
+SELECT DURATION '42 hour';
+  duration  
+------------
+ @ 42 hours
+(1 row)
+
+SELECT DURATION '43 hours';
+  duration  
+------------
+ @ 43 hours
+(1 row)
+
+SELECT DURATION '44 h';
+  duration  
+------------
+ @ 44 hours
+(1 row)
+
+SELECT DURATION '45 minute';
+ duration  
+-----------
+ @ 45 mins
+(1 row)
+
+SELECT DURATION '46 minutes';
+ duration  
+-----------
+ @ 46 mins
+(1 row)
+
+SELECT DURATION '47 m';
+ duration  
+-----------
+ @ 47 mins
+(1 row)
+
+SELECT DURATION '48 second';
+ duration  
+-----------
+ @ 48 secs
+(1 row)
+
+SELECT DURATION '49 seconds';
+ duration  
+-----------
+ @ 49 secs
+(1 row)
+
+SELECT DURATION '50 s';
+ duration  
+-----------
+ @ 50 secs
+(1 row)
+
+SELECT DURATION '51 millisecond';
+   duration   
+--------------
+ @ 0.051 secs
+(1 row)
+
+SELECT DURATION '52 milliseconds';
+   duration   
+--------------
+ @ 0.052 secs
+(1 row)
+
+SELECT DURATION '53 ms';
+   duration   
+--------------
+ @ 0.053 secs
+(1 row)
+
+SELECT DURATION '54 microsecond';
+    duration     
+-----------------
+ @ 0.000054 secs
+(1 row)
+
+SELECT DURATION '55 microseconds';
+    duration     
+-----------------
+ @ 0.000055 secs
+(1 row)
+
+SELECT DURATION '56 us';
+    duration     
+-----------------
+ @ 0.000056 secs
+(1 row)
+
+SELECT DURATION '1 minute 2 h 3 microseconds 4 second 5 ms';
+           duration            
+-------------------------------
+ @ 2 hours 1 min 4.005003 secs
+(1 row)
+
+SELECT DURATION '20:13:41';
+          duration          
+----------------------------
+ @ 20 hours 13 mins 41 secs
+(1 row)
+
+SELECT DURATION 'PT20:13:41';
+          duration          
+----------------------------
+ @ 20 hours 13 mins 41 secs
+(1 row)
+
+-- Invalid duration input
+SELECT DURATION '100 millennium';
+ERROR:  invalid units for duration
+LINE 1: SELECT DURATION '100 millennium';
+                        ^
+SELECT DURATION '101 millenniums';
+ERROR:  invalid units for duration
+LINE 1: SELECT DURATION '101 millenniums';
+                        ^
+SELECT DURATION '102 century';
+ERROR:  invalid units for duration
+LINE 1: SELECT DURATION '102 century';
+                        ^
+SELECT DURATION '103 centuries';
+ERROR:  invalid units for duration
+LINE 1: SELECT DURATION '103 centuries';
+                        ^
+SELECT DURATION '104 decade';
+ERROR:  invalid units for duration
+LINE 1: SELECT DURATION '104 decade';
+                        ^
+SELECT DURATION '105 decades';
+ERROR:  invalid units for duration
+LINE 1: SELECT DURATION '105 decades';
+                        ^
+SELECT DURATION '106 year';
+ERROR:  invalid units for duration
+LINE 1: SELECT DURATION '106 year';
+                        ^
+SELECT DURATION '107 years';
+ERROR:  invalid units for duration
+LINE 1: SELECT DURATION '107 years';
+                        ^
+SELECT DURATION '108 y';
+ERROR:  invalid units for duration
+LINE 1: SELECT DURATION '108 y';
+                        ^
+SELECT DURATION '109 month';
+ERROR:  invalid units for duration
+LINE 1: SELECT DURATION '109 month';
+                        ^
+SELECT DURATION '110 months';
+ERROR:  invalid units for duration
+LINE 1: SELECT DURATION '110 months';
+                        ^
+SELECT DURATION '111 week';
+ERROR:  invalid units for duration
+LINE 1: SELECT DURATION '111 week';
+                        ^
+SELECT DURATION '112 weeks';
+ERROR:  invalid units for duration
+LINE 1: SELECT DURATION '112 weeks';
+                        ^
+SELECT DURATION '113 w';
+ERROR:  invalid units for duration
+LINE 1: SELECT DURATION '113 w';
+                        ^
+SELECT DURATION '114 day';
+ERROR:  invalid units for duration
+LINE 1: SELECT DURATION '114 day';
+                        ^
+SELECT DURATION '115 days';
+ERROR:  invalid units for duration
+LINE 1: SELECT DURATION '115 days';
+                        ^
+SELECT DURATION '116 d';
+ERROR:  invalid units for duration
+LINE 1: SELECT DURATION '116 d';
+                        ^
+SELECT DURATION '5 seconds 2 days';
+ERROR:  invalid units for duration
+LINE 1: SELECT DURATION '5 seconds 2 days';
+                        ^
+SELECT DURATION 'P1995-08-06T20:13:41';
+ERROR:  invalid units for duration
+LINE 1: SELECT DURATION 'P1995-08-06T20:13:41';
+                        ^
+-- Comparison
+SELECT DURATION '1 sec' < DURATION '1 hour';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT DURATION '1 millisecond' < DURATION '1 ms';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT DURATION '1 minute' < DURATION '1 us';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT DURATION '1 sec' <= DURATION '1 hour';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT DURATION '1 millisecond' <= DURATION '1 ms';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT DURATION '1 minute' <= DURATION '1 us';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT DURATION '1 sec' > DURATION '1 hour';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT DURATION '1 millisecond' > DURATION '1 ms';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT DURATION '1 minute' > DURATION '1 us';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT DURATION '1 sec' >= DURATION '1 hour';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT DURATION '1 millisecond' >= DURATION '1 ms';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT DURATION '1 minute' >= DURATION '1 us';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT DURATION '1 sec' = DURATION '1 hour';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT DURATION '1 millisecond' = DURATION '1 ms';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT DURATION '1 minute' = DURATION '1 us';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT DURATION '1 sec' <> DURATION '1 hour';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT DURATION '1 millisecond' <> DURATION '1 ms';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT DURATION '1 minute' <> DURATION '1 us';
+ ?column? 
+----------
+ t
+(1 row)
+

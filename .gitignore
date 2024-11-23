@@ -2,3 +2,7 @@
 *.o
 *.bc
 .vscode/
+
+regression.diffs
+regression.out
+results/

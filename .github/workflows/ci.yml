@@ -1,0 +1,17 @@
+name: CI
+on:
+  push:
+    branches: ['main']
+  pull_request:
+jobs:
+  build:
+    strategy:
+      matrix:
+        pg: [17]
+    name: 🐘 PostgreSQL ${{ matrix.pg }}
+    runs-on: ubuntu-latest
+    container: pgxn/pgxn-tools
+    steps:
+      - run: pg-start ${{ matrix.pg }}
+      - uses: actions/checkout@v3
+      - run: pg-build-test
