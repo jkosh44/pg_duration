@@ -90,10 +90,106 @@ SELECT DURATION '56 us';
  @ 0.000056 secs
 (1 row)
 
+SELECT DURATION '-42 hour';
+    duration    
+----------------
+ @ 42 hours ago
+(1 row)
+
+SELECT DURATION '-43 hours';
+    duration    
+----------------
+ @ 43 hours ago
+(1 row)
+
+SELECT DURATION '-44 h';
+    duration    
+----------------
+ @ 44 hours ago
+(1 row)
+
+SELECT DURATION '-45 minute';
+   duration    
+---------------
+ @ 45 mins ago
+(1 row)
+
+SELECT DURATION '-46 minutes';
+   duration    
+---------------
+ @ 46 mins ago
+(1 row)
+
+SELECT DURATION '-47 m';
+   duration    
+---------------
+ @ 47 mins ago
+(1 row)
+
+SELECT DURATION '-48 second';
+   duration    
+---------------
+ @ 48 secs ago
+(1 row)
+
+SELECT DURATION '-49 seconds';
+   duration    
+---------------
+ @ 49 secs ago
+(1 row)
+
+SELECT DURATION '-50 s';
+   duration    
+---------------
+ @ 50 secs ago
+(1 row)
+
+SELECT DURATION '-51 millisecond';
+     duration     
+------------------
+ @ 0.051 secs ago
+(1 row)
+
+SELECT DURATION '-52 milliseconds';
+     duration     
+------------------
+ @ 0.052 secs ago
+(1 row)
+
+SELECT DURATION '-53 ms';
+     duration     
+------------------
+ @ 0.053 secs ago
+(1 row)
+
+SELECT DURATION '-54 microsecond';
+      duration       
+---------------------
+ @ 0.000054 secs ago
+(1 row)
+
+SELECT DURATION '-55 microseconds';
+      duration       
+---------------------
+ @ 0.000055 secs ago
+(1 row)
+
+SELECT DURATION '-56 us';
+      duration       
+---------------------
+ @ 0.000056 secs ago
+(1 row)
+
 SELECT DURATION '1 minute 2 h 3 microseconds 4 second 5 ms';
            duration            
 -------------------------------
  @ 2 hours 1 min 4.005003 secs
+(1 row)
+
+SELECT DURATION '36 minutes ago';
+   duration    
+---------------
+ @ 36 mins ago
 (1 row)
 
 SELECT DURATION '20:13:41';
@@ -294,6 +390,31 @@ SELECT DURATION '1 minute' <> DURATION '1 us';
  t
 (1 row)
 
+-- Arithmetic
+SELECT - DURATION '10 minutes';
+ ?column?  
+-----------
+ @ 10 mins
+(1 row)
+
+SELECT DURATION '55 seconds' + DURATION '12 hours';
+      ?column?      
+--------------------
+ @ 12 hours 55 secs
+(1 row)
+
+SELECT DURATION '2 hours' - DURATION '30 minutes';
+     ?column?     
+------------------
+ @ 1 hour 30 mins
+(1 row)
+
+SELECT - DURATION '-9223372036854775808 us';
+ERROR:  duration out of range
+SELECT DURATION '9223372036854775807 us' + DURATION '1 us';
+ERROR:  duration out of range
+SELECT DURATION '-9223372036854775808 us' - DURATION '1 us';
+ERROR:  duration out of range
 -- Inserts
 DROP SCHEMA IF EXISTS regress CASCADE;
 NOTICE:  schema "regress" does not exist, skipping

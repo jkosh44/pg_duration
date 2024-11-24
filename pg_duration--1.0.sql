@@ -79,6 +79,33 @@ LANGUAGE C STRICT IMMUTABLE;
 COMMENT ON FUNCTION duration_ne(duration, duration) IS
 'not equal';
 
+-- Arithmetic methods
+
+CREATE FUNCTION duration_um(duration)
+RETURNS duration
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+COMMENT ON FUNCTION duration_um(duration) IS
+'negate';
+
+CREATE FUNCTION duration_pl(duration, duration)
+RETURNS duration
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+COMMENT ON FUNCTION duration_pl(duration, duration) IS
+'plus';
+
+CREATE FUNCTION duration_mi(duration, duration)
+RETURNS duration
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+COMMENT ON FUNCTION duration_mi(duration, duration) IS
+'minus';
+
+
 -- Define duration type
 
 CREATE TYPE duration (
@@ -156,4 +183,23 @@ CREATE OPERATOR <> (
 	NEGATOR = '=',
 	RESTRICT = neqsel,
 	JOIN = neqjoinsel
+);
+
+CREATE OPERATOR - (
+	RIGHTARG = duration,
+	PROCEDURE = duration_um
+);
+
+CREATE OPERATOR + (
+	LEFTARG = duration,
+	RIGHTARG = duration,
+	PROCEDURE = duration_pl,
+	COMMUTATOR = '+'
+);
+
+CREATE OPERATOR - (
+	LEFTARG = duration,
+	RIGHTARG = duration,
+	PROCEDURE = duration_mi,
+	COMMUTATOR = '-'
 );
