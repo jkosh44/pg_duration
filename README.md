@@ -29,6 +29,40 @@ Then conntect to a database as a superuser and run:
 CREATE EXTENSION pg_duration;
 ```
 
+## Usage
+
+### Input
+
+All valid [`interval` input](https://www.postgresql.org/docs/current/datatype-datetime.html#DATATYPE-INTERVAL-INPUT)
+that doesn't specify units larger than hours, is valid `duration` input.
+
+### Output
+
+`duration` output is the same as
+[`interval` output](https://www.postgresql.org/docs/current/datatype-datetime.html#DATATYPE-INTERVAL-OUTPUT), without
+units larger than hours.
+
+### Operators
+
+| Operator                            | Description           | Example                                                |
+|-------------------------------------|-----------------------|--------------------------------------------------------|
+| `duration + duration` -> `duration` | Add durations         | `duration '5 sec' + duration '10 min'` -> `00:10:05`   |
+| `duration - duration` -> `duration` | Subtract durations    | `duration '6 hours' - duration '15 min'` -> `05:45:00` |
+| `- duration` -> `duration`          | Negate a duration     | `- duration '450 milliseconds'` -> `-00:00:00.45`      |
+| `duration < duration` -> `bool`     | Less than             | `duration '10 min' < duration '1 hour'` -> `t`         |
+| `duration <= duration` -> `bool`    | Less than or equal    | `duration '10 min' <= duration '1 hour'` -> `t`        |
+| `duration > duration` -> `bool`     | Greater than          | `duration '10 min' > duration '1 hour'` -> `f`         |
+| `duration >= duration` -> `bool`    | Greater than or equal | `duration '10 min' >= duration '1 hour'` -> `f`        |
+| `duration = duration` -> `bool`     | Equal                 | `duration '10 min' = duration '1 hour'` -> `f`         |
+| `duration <> duration` -> `bool`    | Not equal             | `duration '10 min' <> duration '1 hour'` -> `t`        |
+
+### Supported Indexes
+
+The `duration` type supports the following indexes
+
+- `BTREE`
+- `HASH`
+
 ## Rationale
 
 Why not just use the `interval` type? For starters, the `interval` type is 16 bytes while the `duration` type is only 8
