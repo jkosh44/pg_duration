@@ -87,7 +87,8 @@ CREATE TYPE duration (
     OUTPUT = duration_out,
     RECEIVE = duration_recv,
     SEND = duration_send,
-    ALIGNMENT = int4
+    PASSEDBYVALUE,
+    ALIGNMENT = double
 );
 
 COMMENT ON TYPE duration IS 'duration of time';
