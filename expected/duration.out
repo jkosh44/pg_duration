@@ -415,18 +415,34 @@ SELECT DURATION '9223372036854775807 us' + DURATION '1 us';
 ERROR:  duration out of range
 SELECT DURATION '-9223372036854775808 us' - DURATION '1 us';
 ERROR:  duration out of range
--- Inserts
+-- Inserts and indexes
 DROP SCHEMA IF EXISTS regress CASCADE;
 NOTICE:  schema "regress" does not exist, skipping
 CREATE SCHEMA regress;
 CREATE TABLE regress.t (d1 DURATION, d2 DURATION);
-INSERT INTO regress.t VALUES ('1 s 6 m'), ('500ms 4 h');
+CREATE INDEX idx1 ON regress.t USING BTREE (d1);
+CREATE INDEX idx2 ON regress.t USING HASH (d2);
+INSERT INTO regress.t VALUES ('1 s 6 m', '5 us'), ('500ms 4 h', '42 seconds 3 us'), ('666 hours', '999 min');
 SELECT * FROM regress.t;
-         d1         | d2 
---------------------+----
- @ 6 mins 1 sec     | 
- @ 4 hours 0.5 secs | 
+         d1         |         d2         
+--------------------+--------------------
+ @ 6 mins 1 sec     | @ 0.000005 secs
+ @ 4 hours 0.5 secs | @ 42.000003 secs
+ @ 666 hours        | @ 16 hours 39 mins
+(3 rows)
+
+SELECT d1 FROM regress.t WHERE d1 > '1 hour';
+         d1         
+--------------------
+ @ 4 hours 0.5 secs
+ @ 666 hours
 (2 rows)
+
+SELECT d2 FROM regress.t WHERE d2 = '42 seconds 3 microseconds';
+        d2        
+------------------
+ @ 42.000003 secs
+(1 row)
 
 DROP SCHEMA regress CASCADE;
 NOTICE:  drop cascades to table regress.t

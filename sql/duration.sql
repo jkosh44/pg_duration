@@ -90,10 +90,15 @@ SELECT DURATION '2 hours' - DURATION '30 minutes';
 SELECT - DURATION '-9223372036854775808 us';
 SELECT DURATION '9223372036854775807 us' + DURATION '1 us';
 SELECT DURATION '-9223372036854775808 us' - DURATION '1 us';
--- Inserts
+
+-- Inserts and indexes
 DROP SCHEMA IF EXISTS regress CASCADE;
 CREATE SCHEMA regress;
 CREATE TABLE regress.t (d1 DURATION, d2 DURATION);
-INSERT INTO regress.t VALUES ('1 s 6 m'), ('500ms 4 h');
+CREATE INDEX idx1 ON regress.t USING BTREE (d1);
+CREATE INDEX idx2 ON regress.t USING HASH (d2);
+INSERT INTO regress.t VALUES ('1 s 6 m', '5 us'), ('500ms 4 h', '42 seconds 3 us'), ('666 hours', '999 min');
 SELECT * FROM regress.t;
+SELECT d1 FROM regress.t WHERE d1 > '1 hour';
+SELECT d2 FROM regress.t WHERE d2 = '42 seconds 3 microseconds';
 DROP SCHEMA regress CASCADE;

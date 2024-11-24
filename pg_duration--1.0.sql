@@ -29,6 +29,20 @@ CREATE FUNCTION duration_send(duration)
    AS 'MODULE_PATHNAME'
    LANGUAGE C IMMUTABLE STRICT;
 
+-- Indexing methods
+
+CREATE OR REPLACE FUNCTION duration_cmp(duration, duration)
+	RETURNS int4
+	AS 'MODULE_PATHNAME'
+	LANGUAGE C STRICT IMMUTABLE;
+
+COMMENT ON FUNCTION duration_cmp(duration, duration) IS 'btree comparison function';
+
+CREATE OR REPLACE FUNCTION hash_duration(duration)
+	RETURNS int4
+	AS 'MODULE_PATHNAME'
+	LANGUAGE C STRICT IMMUTABLE;
+
 -- Comparison methods
 
 CREATE FUNCTION duration_lt(duration, duration)
@@ -203,3 +217,19 @@ CREATE OPERATOR - (
 	PROCEDURE = duration_mi,
 	COMMUTATOR = '-'
 );
+
+-- Create the operator classes for indexing
+
+CREATE OPERATOR CLASS duration_ops
+    DEFAULT FOR TYPE duration USING btree AS
+        OPERATOR        1       <,
+        OPERATOR        2       <=,
+        OPERATOR        3       =,
+        OPERATOR        4       >=,
+        OPERATOR        5       >,
+        FUNCTION        1       duration_cmp(duration, duration);
+
+CREATE OPERATOR CLASS duration_ops
+    DEFAULT FOR TYPE duration USING hash AS
+    OPERATOR    1   =,
+    FUNCTION    1   hash_duration(duration);

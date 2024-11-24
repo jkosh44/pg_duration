@@ -11,6 +11,7 @@
 #include "fmgr.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
+#include "utils/fmgrprotos.h"
 
 #include "pg_duration.h"
 
@@ -23,6 +24,11 @@ PG_FUNCTION_INFO_V1(duration_in);
 PG_FUNCTION_INFO_V1(duration_out);
 PG_FUNCTION_INFO_V1(duration_recv);
 PG_FUNCTION_INFO_V1(duration_send);
+
+/*
+** Indexing routines
+*/
+PG_FUNCTION_INFO_V1(hash_duration);
 
 /*
 ** Comparison operators
@@ -43,7 +49,7 @@ PG_FUNCTION_INFO_V1(duration_pl);
 PG_FUNCTION_INFO_V1(duration_mi);
 
 /*****************************************************************************
- * Input/Output functions
+ * Input/Output methods
  *****************************************************************************/
 
 Datum
@@ -181,6 +187,15 @@ itmin2duration(struct pg_itm_in *itm_in, Duration *duration)
 		return -1;
 	*duration = itm_in->tm_usec;
 	return 0;
+}
+
+/*****************************************************************************
+ *				   Indexing methods
+ *****************************************************************************/
+
+Datum
+hash_duration(PG_FUNCTION_ARGS) {
+    return hashint8(fcinfo);
 }
 
 /*****************************************************************************
