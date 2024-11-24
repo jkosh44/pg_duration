@@ -294,3 +294,18 @@ SELECT DURATION '1 minute' <> DURATION '1 us';
  t
 (1 row)
 
+-- Inserts
+DROP SCHEMA IF EXISTS regress CASCADE;
+NOTICE:  schema "regress" does not exist, skipping
+CREATE SCHEMA regress;
+CREATE TABLE regress.t (d1 DURATION, d2 DURATION);
+INSERT INTO regress.t VALUES ('1 s 6 m'), ('500ms 4 h');
+SELECT * FROM regress.t;
+         d1         | d2 
+--------------------+----
+ @ 6 mins 1 sec     | 
+ @ 4 hours 0.5 secs | 
+(2 rows)
+
+DROP SCHEMA regress CASCADE;
+NOTICE:  drop cascades to table regress.t

@@ -65,3 +65,11 @@ SELECT DURATION '1 minute' = DURATION '1 us';
 SELECT DURATION '1 sec' <> DURATION '1 hour';
 SELECT DURATION '1 millisecond' <> DURATION '1 ms';
 SELECT DURATION '1 minute' <> DURATION '1 us';
+
+-- Inserts
+DROP SCHEMA IF EXISTS regress CASCADE;
+CREATE SCHEMA regress;
+CREATE TABLE regress.t (d1 DURATION, d2 DURATION);
+INSERT INTO regress.t VALUES ('1 s 6 m'), ('500ms 4 h');
+SELECT * FROM regress.t;
+DROP SCHEMA regress CASCADE;
