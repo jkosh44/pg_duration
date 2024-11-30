@@ -48,6 +48,8 @@ PG_FUNCTION_INFO_V1(duration_um);
 PG_FUNCTION_INFO_V1(duration_pl);
 PG_FUNCTION_INFO_V1(duration_mi);
 
+static void EncodeSpecialDuration(const Duration duration, char *str);
+
 /*****************************************************************************
  * Input/Output methods
  *****************************************************************************/
@@ -104,6 +106,14 @@ duration_in(PG_FUNCTION_ARGS)
 						 errmsg("invalid units for duration")));
 			break;
 
+		case DTK_LATE:
+			DURATION_NOEND(result);
+			break;
+
+		case DTK_EARLY:
+			DURATION_NOBEGIN(result);
+			break;
+
 		default:
 			elog(ERROR, "unexpected dtype %d while parsing duration \"%s\"",
 				 dtype, str);
@@ -121,8 +131,13 @@ duration_out(PG_FUNCTION_ARGS)
 			   *itm = &tt;
 	char		buf[MAXDATELEN + 1];
 
-	duration2itm(duration, itm);
-	EncodeInterval(itm, IntervalStyle, buf);
+	if (DURATION_NOT_FINITE(duration))
+		EncodeSpecialDuration(duration, buf);
+	else
+	{
+		duration2itm(duration, itm);
+		EncodeInterval(itm, IntervalStyle, buf);
+	}
 
 	result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
@@ -189,13 +204,25 @@ itmin2duration(struct pg_itm_in *itm_in, Duration *duration)
 	return 0;
 }
 
+static void
+EncodeSpecialDuration(const Duration duration, char *str)
+{
+	if (DURATION_IS_NOBEGIN(duration))
+		strcpy(str, EARLY);
+	else if (DURATION_IS_NOEND(duration))
+		strcpy(str, LATE);
+	else						/* shouldn't happen */
+		elog(ERROR, "invalid argument for EncodeSpecialDuration");
+}
+
 /*****************************************************************************
  *				   Indexing methods
  *****************************************************************************/
 
 Datum
-hash_duration(PG_FUNCTION_ARGS) {
-    return hashint8(fcinfo);
+hash_duration(PG_FUNCTION_ARGS)
+{
+	return hashint8(fcinfo);
 }
 
 /*****************************************************************************
@@ -287,12 +314,32 @@ duration_um(PG_FUNCTION_ARGS)
 	Duration	duration = PG_GETARG_DURATION(0);
 	Duration	result;
 
-	if (pg_sub_s64_overflow(INT64CONST(0), duration, &result))
+	if (DURATION_IS_NOBEGIN(duration))
+		DURATION_NOEND(result);
+	else if (DURATION_IS_NOEND(duration))
+		DURATION_NOBEGIN(result);
+	else if (pg_sub_s64_overflow(INT64CONST(0), duration, &result) || DURATION_NOT_FINITE(result))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("duration out of range")));
 
-	PG_RETURN_DURATION(-result);
+	PG_RETURN_DURATION(result);
+}
+
+static Duration
+finite_duration_pl(const Duration duration1, const Duration duration2)
+{
+	Duration	result;
+
+	Assert(!DURATION_NOT_FINITE(duration1));
+	Assert(!DURATION_NOT_FINITE(duration2));
+
+	if (pg_add_s64_overflow(duration1, duration2, &result) || DURATION_NOT_FINITE(result))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("duration out of range")));
+
+	return result;
 }
 
 Datum
@@ -302,12 +349,56 @@ duration_pl(PG_FUNCTION_ARGS)
 	Duration	duration2 = PG_GETARG_DURATION(1);
 	Duration	result;
 
-	if (pg_add_s64_overflow(duration1, duration2, &result))
+	/*
+	 * Handle infinities.
+	 *
+	 * We treat anything that amounts to "infinity - infinity" as an error,
+	 * since the duration type has nothing equivalent to NaN.
+	 */
+	if (DURATION_IS_NOBEGIN(duration1))
+	{
+		if (DURATION_IS_NOEND(duration2))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("duration out of range")));
+		else
+			DURATION_NOBEGIN(result);
+	}
+	else if (DURATION_IS_NOEND(duration1))
+	{
+		if (DURATION_IS_NOBEGIN(duration2))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("duration out of range")));
+		else
+			DURATION_NOEND(result);
+	}
+	else if (DURATION_NOT_FINITE(duration2))
+		result = duration2;
+
+	/*
+	 * Handle finite values.
+	 */
+	else
+		result = finite_duration_pl(duration1, duration2);
+
+	PG_RETURN_DURATION(result);
+}
+
+static Duration
+finite_duration_mi(const Duration duration1, const Duration duration2)
+{
+	Duration	result;
+
+	Assert(!DURATION_NOT_FINITE(duration1));
+	Assert(!DURATION_NOT_FINITE(duration2));
+
+	if (pg_sub_s64_overflow(duration1, duration2, &result) || DURATION_NOT_FINITE(result))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("duration out of range")));
 
-	PG_RETURN_DURATION(result);
+	return result;
 }
 
 Datum
@@ -317,10 +408,36 @@ duration_mi(PG_FUNCTION_ARGS)
 	Duration	duration2 = PG_GETARG_DURATION(1);
 	Duration	result;
 
-	if (pg_sub_s64_overflow(duration1, duration2, &result))
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("duration out of range")));
+	/*
+	 * Handle infinities.
+	 *
+	 * We treat anything that amounts to "infinity - infinity" as an error,
+	 * since the duration type has nothing equivalent to NaN.
+	 */
+	if (DURATION_IS_NOBEGIN(duration1))
+	{
+		if (DURATION_IS_NOBEGIN(duration2))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("duration out of range")));
+		else
+			DURATION_NOBEGIN(result);
+	}
+	else if (DURATION_IS_NOEND(duration1))
+	{
+		if (DURATION_IS_NOEND(duration2))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("duration out of range")));
+		else
+			DURATION_NOEND(result);
+	}
+	else if (DURATION_IS_NOBEGIN(duration2))
+		DURATION_NOEND(result);
+	else if (DURATION_IS_NOEND(duration2))
+		DURATION_NOBEGIN(result);
+	else
+		result = finite_duration_mi(duration1, duration2);
 
 	PG_RETURN_DURATION(result);
 }
