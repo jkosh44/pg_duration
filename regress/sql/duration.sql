@@ -87,9 +87,78 @@ SELECT - DURATION '10 minutes';
 SELECT DURATION '55 seconds' + DURATION '12 hours';
 SELECT DURATION '2 hours' - DURATION '30 minutes';
 
-SELECT - DURATION '-9223372036854775808 us';
-SELECT DURATION '9223372036854775807 us' + DURATION '1 us';
-SELECT DURATION '-9223372036854775808 us' - DURATION '1 us';
+SELECT - DURATION '-9223372036854775807 us';
+SELECT DURATION '9223372036854775806 us' + DURATION '1 us';
+SELECT DURATION '9223372036854775806 us' + DURATION '2 us';
+SELECT DURATION '-9223372036854775807 us' - DURATION '1 us';
+SELECT DURATION '-9223372036854775807 us' - DURATION '2 us';
+
+-- Infinity
+SELECT DURATION 'infinity';
+SELECT DURATION '-infinity';
+
+SELECT - DURATION 'infinity';
+SELECT - DURATION '-infinity';
+
+SELECT DURATION 'infinity' + DURATION '42 ms';
+SELECT DURATION '-infinity' + DURATION '42 ms';
+SELECT DURATION 'infinity' + DURATION 'infinity';
+SELECT DURATION 'infinity' + DURATION '-infinity';
+SELECT DURATION '-infinity' + DURATION 'infinity';
+SELECT DURATION '-infinity' + DURATION '-infinity';
+
+SELECT DURATION 'infinity' - DURATION '42 ms';
+SELECT DURATION '-infinity' - DURATION '42 ms';
+SELECT DURATION 'infinity' - DURATION 'infinity';
+SELECT DURATION 'infinity' - DURATION '-infinity';
+SELECT DURATION '-infinity' - DURATION 'infinity';
+SELECT DURATION '-infinity' - DURATION '-infinity';
+
+SELECT DURATION 'infinity' > DURATION '999 hours';
+SELECT DURATION 'infinity' >= DURATION '999 hours';
+SELECT DURATION 'infinity' < DURATION '999 hours';
+SELECT DURATION 'infinity' <= DURATION '999 hours';
+SELECT DURATION 'infinity' = DURATION '999 hours';
+SELECT DURATION 'infinity' <> DURATION '999 hours';
+
+SELECT DURATION '-infinity' > DURATION '999 hours';
+SELECT DURATION '-infinity' >= DURATION '999 hours';
+SELECT DURATION '-infinity' < DURATION '999 hours';
+SELECT DURATION '-infinity' <= DURATION '999 hours';
+SELECT DURATION '-infinity' = DURATION '999 hours';
+SELECT DURATION '-infinity' <> DURATION '999 hours';
+
+SELECT DURATION 'infinity' > DURATION 'infinity';
+SELECT DURATION 'infinity' >= DURATION 'infinity';
+SELECT DURATION 'infinity' < DURATION 'infinity';
+SELECT DURATION 'infinity' <= DURATION 'infinity';
+SELECT DURATION 'infinity' = DURATION 'infinity';
+SELECT DURATION 'infinity' <> DURATION 'infinity';
+
+SELECT DURATION 'infinity' > DURATION '-infinity';
+SELECT DURATION 'infinity' >= DURATION '-infinity';
+SELECT DURATION 'infinity' < DURATION '-infinity';
+SELECT DURATION 'infinity' <= DURATION '-infinity';
+SELECT DURATION 'infinity' = DURATION '-infinity';
+SELECT DURATION 'infinity' <> DURATION '-infinity';
+
+SELECT DURATION '-infinity' > DURATION 'infinity';
+SELECT DURATION '-infinity' >= DURATION 'infinity';
+SELECT DURATION '-infinity' < DURATION 'infinity';
+SELECT DURATION '-infinity' <= DURATION 'infinity';
+SELECT DURATION '-infinity' = DURATION 'infinity';
+SELECT DURATION '-infinity' <> DURATION 'infinity';
+
+SELECT DURATION '-infinity' > DURATION '-infinity';
+SELECT DURATION '-infinity' >= DURATION '-infinity';
+SELECT DURATION '-infinity' < DURATION '-infinity';
+SELECT DURATION '-infinity' <= DURATION '-infinity';
+SELECT DURATION '-infinity' = DURATION '-infinity';
+SELECT DURATION '-infinity' <> DURATION '-infinity';
+
+-- This matches PostgreSQL semantics, but is probably incorrect.
+SELECT DURATION '9223372036854775807 us';
+SELECT DURATION '-9223372036854775808 us';
 
 -- Inserts and indexes
 DROP SCHEMA IF EXISTS regress CASCADE;

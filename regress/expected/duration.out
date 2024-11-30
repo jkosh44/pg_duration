@@ -392,9 +392,9 @@ SELECT DURATION '1 minute' <> DURATION '1 us';
 
 -- Arithmetic
 SELECT - DURATION '10 minutes';
- ?column?  
------------
- @ 10 mins
+   ?column?    
+---------------
+ @ 10 mins ago
 (1 row)
 
 SELECT DURATION '55 seconds' + DURATION '12 hours';
@@ -409,12 +409,326 @@ SELECT DURATION '2 hours' - DURATION '30 minutes';
  @ 1 hour 30 mins
 (1 row)
 
-SELECT - DURATION '-9223372036854775808 us';
+SELECT - DURATION '-9223372036854775807 us';
 ERROR:  duration out of range
-SELECT DURATION '9223372036854775807 us' + DURATION '1 us';
+SELECT DURATION '9223372036854775806 us' + DURATION '1 us';
 ERROR:  duration out of range
-SELECT DURATION '-9223372036854775808 us' - DURATION '1 us';
+SELECT DURATION '9223372036854775806 us' + DURATION '2 us';
 ERROR:  duration out of range
+SELECT DURATION '-9223372036854775807 us' - DURATION '1 us';
+ERROR:  duration out of range
+SELECT DURATION '-9223372036854775807 us' - DURATION '2 us';
+ERROR:  duration out of range
+-- Infinity
+SELECT DURATION 'infinity';
+ duration 
+----------
+ infinity
+(1 row)
+
+SELECT DURATION '-infinity';
+ duration  
+-----------
+ -infinity
+(1 row)
+
+SELECT - DURATION 'infinity';
+ ?column?  
+-----------
+ -infinity
+(1 row)
+
+SELECT - DURATION '-infinity';
+ ?column? 
+----------
+ infinity
+(1 row)
+
+SELECT DURATION 'infinity' + DURATION '42 ms';
+ ?column? 
+----------
+ infinity
+(1 row)
+
+SELECT DURATION '-infinity' + DURATION '42 ms';
+ ?column?  
+-----------
+ -infinity
+(1 row)
+
+SELECT DURATION 'infinity' + DURATION 'infinity';
+ ?column? 
+----------
+ infinity
+(1 row)
+
+SELECT DURATION 'infinity' + DURATION '-infinity';
+ERROR:  duration out of range
+SELECT DURATION '-infinity' + DURATION 'infinity';
+ERROR:  duration out of range
+SELECT DURATION '-infinity' + DURATION '-infinity';
+ ?column?  
+-----------
+ -infinity
+(1 row)
+
+SELECT DURATION 'infinity' - DURATION '42 ms';
+ ?column? 
+----------
+ infinity
+(1 row)
+
+SELECT DURATION '-infinity' - DURATION '42 ms';
+ ?column?  
+-----------
+ -infinity
+(1 row)
+
+SELECT DURATION 'infinity' - DURATION 'infinity';
+ERROR:  duration out of range
+SELECT DURATION 'infinity' - DURATION '-infinity';
+ ?column? 
+----------
+ infinity
+(1 row)
+
+SELECT DURATION '-infinity' - DURATION 'infinity';
+ ?column?  
+-----------
+ -infinity
+(1 row)
+
+SELECT DURATION '-infinity' - DURATION '-infinity';
+ERROR:  duration out of range
+SELECT DURATION 'infinity' > DURATION '999 hours';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT DURATION 'infinity' >= DURATION '999 hours';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT DURATION 'infinity' < DURATION '999 hours';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT DURATION 'infinity' <= DURATION '999 hours';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT DURATION 'infinity' = DURATION '999 hours';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT DURATION 'infinity' <> DURATION '999 hours';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT DURATION '-infinity' > DURATION '999 hours';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT DURATION '-infinity' >= DURATION '999 hours';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT DURATION '-infinity' < DURATION '999 hours';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT DURATION '-infinity' <= DURATION '999 hours';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT DURATION '-infinity' = DURATION '999 hours';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT DURATION '-infinity' <> DURATION '999 hours';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT DURATION 'infinity' > DURATION 'infinity';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT DURATION 'infinity' >= DURATION 'infinity';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT DURATION 'infinity' < DURATION 'infinity';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT DURATION 'infinity' <= DURATION 'infinity';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT DURATION 'infinity' = DURATION 'infinity';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT DURATION 'infinity' <> DURATION 'infinity';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT DURATION 'infinity' > DURATION '-infinity';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT DURATION 'infinity' >= DURATION '-infinity';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT DURATION 'infinity' < DURATION '-infinity';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT DURATION 'infinity' <= DURATION '-infinity';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT DURATION 'infinity' = DURATION '-infinity';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT DURATION 'infinity' <> DURATION '-infinity';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT DURATION '-infinity' > DURATION 'infinity';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT DURATION '-infinity' >= DURATION 'infinity';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT DURATION '-infinity' < DURATION 'infinity';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT DURATION '-infinity' <= DURATION 'infinity';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT DURATION '-infinity' = DURATION 'infinity';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT DURATION '-infinity' <> DURATION 'infinity';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT DURATION '-infinity' > DURATION '-infinity';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT DURATION '-infinity' >= DURATION '-infinity';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT DURATION '-infinity' < DURATION '-infinity';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT DURATION '-infinity' <= DURATION '-infinity';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT DURATION '-infinity' = DURATION '-infinity';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT DURATION '-infinity' <> DURATION '-infinity';
+ ?column? 
+----------
+ f
+(1 row)
+
+-- This matches PostgreSQL semantics, but is probably incorrect.
+SELECT DURATION '9223372036854775807 us';
+ duration 
+----------
+ infinity
+(1 row)
+
+SELECT DURATION '-9223372036854775808 us';
+ duration  
+-----------
+ -infinity
+(1 row)
+
 -- Inserts and indexes
 DROP SCHEMA IF EXISTS regress CASCADE;
 NOTICE:  schema "regress" does not exist, skipping

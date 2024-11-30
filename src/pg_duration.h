@@ -28,3 +28,19 @@ DurationGetDatum(const Duration X)
 
 void		duration2itm(Duration span, struct pg_itm *itm);
 int			itmin2duration(struct pg_itm_in *itm_in, Duration * span);
+
+/*
+ * We reserve the minumum and maximum int64 value to represent
+ * duration -infinity and +infinity.
+ */
+#define DURATION_NOBEGIN(d)	\
+	do {(d) = PG_INT64_MIN;} while (0)
+
+#define DURATION_IS_NOBEGIN(d) ((d) == PG_INT64_MIN)
+
+#define DURATION_NOEND(d)		\
+	do {(d) = PG_INT64_MAX;} while (0)
+
+#define DURATION_IS_NOEND(d) ((d) == PG_INT64_MAX)
+
+#define DURATION_NOT_FINITE(d) (DURATION_IS_NOBEGIN(d) || DURATION_IS_NOEND(d))
