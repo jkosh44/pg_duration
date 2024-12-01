@@ -7,6 +7,8 @@
 
 #include "postgres.h"
 
+#include <math.h>
+
 #include "common/int.h"
 #include "fmgr.h"
 #include "libpq/pqformat.h"
@@ -47,8 +49,11 @@ PG_FUNCTION_INFO_V1(duration_ne);
 PG_FUNCTION_INFO_V1(duration_um);
 PG_FUNCTION_INFO_V1(duration_pl);
 PG_FUNCTION_INFO_V1(duration_mi);
+PG_FUNCTION_INFO_V1(duration_mul);
+PG_FUNCTION_INFO_V1(duration_div);
 
 static void EncodeSpecialDuration(const Duration duration, char *str);
+static Duration duration_um_internal(const Duration duration);
 
 /*****************************************************************************
  * Input/Output methods
@@ -229,6 +234,16 @@ hash_duration(PG_FUNCTION_ARGS)
  *				   Comparison operators
  *****************************************************************************/
 
+static int
+duration_sign(const Duration duration)
+{
+	if (duration < 0)
+		return -1;
+	if (duration > 0)
+		return 1;
+	return 0;
+}
+
 Datum
 duration_cmp(PG_FUNCTION_ARGS)
 {
@@ -308,10 +323,9 @@ duration_ne(PG_FUNCTION_ARGS)
  *				   Arithmetic operators
  *****************************************************************************/
 
-Datum
-duration_um(PG_FUNCTION_ARGS)
+static Duration
+duration_um_internal(const Duration duration)
 {
-	Duration	duration = PG_GETARG_DURATION(0);
 	Duration	result;
 
 	if (DURATION_IS_NOBEGIN(duration))
@@ -322,6 +336,15 @@ duration_um(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("duration out of range")));
+
+	return result;
+}
+
+Datum
+duration_um(PG_FUNCTION_ARGS)
+{
+	Duration	duration = PG_GETARG_DURATION(0);
+	Duration	result = duration_um_internal(duration);
 
 	PG_RETURN_DURATION(result);
 }
@@ -440,4 +463,120 @@ duration_mi(PG_FUNCTION_ARGS)
 		result = finite_duration_mi(duration1, duration2);
 
 	PG_RETURN_DURATION(result);
+}
+
+Datum
+duration_mul(PG_FUNCTION_ARGS)
+{
+	Duration	duration = PG_GETARG_DURATION(0);
+	float8		factor = PG_GETARG_FLOAT8(1);
+	double		result_double;
+	Duration	result;
+
+	/*
+	 * Handle NaN and infinities.
+	 *
+	 * We treat "0 * infinity" and "infinity * 0" as errors, since the
+	 * duration type has nothing equivalent to NaN.
+	 */
+	if (isnan(factor))
+		goto out_of_range;
+
+	if (DURATION_NOT_FINITE(duration))
+	{
+		if (factor == 0.0)
+			goto out_of_range;
+
+		if (factor < 0.0)
+			result = duration_um_internal(duration);
+		else
+			result = duration;
+
+		PG_RETURN_DURATION(result);
+	}
+	if (isinf(factor))
+	{
+		int			isign = duration_sign(duration);
+
+		if (isign == 0)
+			goto out_of_range;
+
+		if (factor * isign < 0)
+			DURATION_NOBEGIN(result);
+		else
+			DURATION_NOEND(result);
+
+		PG_RETURN_DURATION(result);
+	}
+
+	result_double = rint(duration * factor);
+	if (isnan(result_double) || !FLOAT8_FITS_IN_INT64(result_double))
+		goto out_of_range;
+	result = (int64) result_double;
+
+	if (DURATION_NOT_FINITE(result))
+		goto out_of_range;
+
+	PG_RETURN_DURATION(result);
+
+out_of_range:
+	ereport(ERROR,
+			errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+			errmsg("duration out of range"));
+
+	PG_RETURN_NULL();			/* keep compiler quiet */
+}
+
+Datum
+duration_div(PG_FUNCTION_ARGS)
+{
+	Duration	duration = PG_GETARG_DURATION(0);
+	float8		factor = PG_GETARG_FLOAT8(1);
+	double		result_double;
+	Duration	result;
+
+	if (factor == 0.0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
+
+	/*
+	 * Handle NaN and infinities.
+	 *
+	 * We treat "infinity / infinity" as an error, since the duration type has
+	 * nothing equivalent to NaN.  Otherwise, dividing by infinity is handled
+	 * by the regular division code, causing the result to be set to zero.
+	 */
+	if (isnan(factor))
+		goto out_of_range;
+
+	if (DURATION_NOT_FINITE(duration))
+	{
+		if (isinf(factor))
+			goto out_of_range;
+
+		if (factor < 0.0)
+			result = duration_um_internal(duration);
+		else
+			result = duration;
+
+		PG_RETURN_DURATION(result);
+	}
+
+	result_double = rint(duration / factor);
+	if (isnan(result_double) || !FLOAT8_FITS_IN_INT64(result_double))
+		goto out_of_range;
+	result = (int64) result_double;
+
+	if (DURATION_NOT_FINITE(result))
+		goto out_of_range;
+
+	PG_RETURN_DURATION(result);
+
+out_of_range:
+	ereport(ERROR,
+			errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+			errmsg("duration out of range"));
+
+	PG_RETURN_NULL();			/* keep compiler quiet */
 }

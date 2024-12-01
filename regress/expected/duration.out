@@ -1,729 +1,881 @@
 CREATE EXTENSION pg_duration;
 -- Valid duration input
-SELECT DURATION '42 hour';
+SELECT duration '42 hour';
   duration  
 ------------
  @ 42 hours
 (1 row)
 
-SELECT DURATION '43 hours';
+SELECT duration '43 hours';
   duration  
 ------------
  @ 43 hours
 (1 row)
 
-SELECT DURATION '44 h';
+SELECT duration '44 h';
   duration  
 ------------
  @ 44 hours
 (1 row)
 
-SELECT DURATION '45 minute';
+SELECT duration '45 minute';
  duration  
 -----------
  @ 45 mins
 (1 row)
 
-SELECT DURATION '46 minutes';
+SELECT duration '46 minutes';
  duration  
 -----------
  @ 46 mins
 (1 row)
 
-SELECT DURATION '47 m';
+SELECT duration '47 m';
  duration  
 -----------
  @ 47 mins
 (1 row)
 
-SELECT DURATION '48 second';
+SELECT duration '48 second';
  duration  
 -----------
  @ 48 secs
 (1 row)
 
-SELECT DURATION '49 seconds';
+SELECT duration '49 seconds';
  duration  
 -----------
  @ 49 secs
 (1 row)
 
-SELECT DURATION '50 s';
+SELECT duration '50 s';
  duration  
 -----------
  @ 50 secs
 (1 row)
 
-SELECT DURATION '51 millisecond';
+SELECT duration '51 millisecond';
    duration   
 --------------
  @ 0.051 secs
 (1 row)
 
-SELECT DURATION '52 milliseconds';
+SELECT duration '52 milliseconds';
    duration   
 --------------
  @ 0.052 secs
 (1 row)
 
-SELECT DURATION '53 ms';
+SELECT duration '53 ms';
    duration   
 --------------
  @ 0.053 secs
 (1 row)
 
-SELECT DURATION '54 microsecond';
+SELECT duration '54 microsecond';
     duration     
 -----------------
  @ 0.000054 secs
 (1 row)
 
-SELECT DURATION '55 microseconds';
+SELECT duration '55 microseconds';
     duration     
 -----------------
  @ 0.000055 secs
 (1 row)
 
-SELECT DURATION '56 us';
+SELECT duration '56 us';
     duration     
 -----------------
  @ 0.000056 secs
 (1 row)
 
-SELECT DURATION '-42 hour';
+SELECT duration '-42 hour';
     duration    
 ----------------
  @ 42 hours ago
 (1 row)
 
-SELECT DURATION '-43 hours';
+SELECT duration '-43 hours';
     duration    
 ----------------
  @ 43 hours ago
 (1 row)
 
-SELECT DURATION '-44 h';
+SELECT duration '-44 h';
     duration    
 ----------------
  @ 44 hours ago
 (1 row)
 
-SELECT DURATION '-45 minute';
+SELECT duration '-45 minute';
    duration    
 ---------------
  @ 45 mins ago
 (1 row)
 
-SELECT DURATION '-46 minutes';
+SELECT duration '-46 minutes';
    duration    
 ---------------
  @ 46 mins ago
 (1 row)
 
-SELECT DURATION '-47 m';
+SELECT duration '-47 m';
    duration    
 ---------------
  @ 47 mins ago
 (1 row)
 
-SELECT DURATION '-48 second';
+SELECT duration '-48 second';
    duration    
 ---------------
  @ 48 secs ago
 (1 row)
 
-SELECT DURATION '-49 seconds';
+SELECT duration '-49 seconds';
    duration    
 ---------------
  @ 49 secs ago
 (1 row)
 
-SELECT DURATION '-50 s';
+SELECT duration '-50 s';
    duration    
 ---------------
  @ 50 secs ago
 (1 row)
 
-SELECT DURATION '-51 millisecond';
+SELECT duration '-51 millisecond';
      duration     
 ------------------
  @ 0.051 secs ago
 (1 row)
 
-SELECT DURATION '-52 milliseconds';
+SELECT duration '-52 milliseconds';
      duration     
 ------------------
  @ 0.052 secs ago
 (1 row)
 
-SELECT DURATION '-53 ms';
+SELECT duration '-53 ms';
      duration     
 ------------------
  @ 0.053 secs ago
 (1 row)
 
-SELECT DURATION '-54 microsecond';
+SELECT duration '-54 microsecond';
       duration       
 ---------------------
  @ 0.000054 secs ago
 (1 row)
 
-SELECT DURATION '-55 microseconds';
+SELECT duration '-55 microseconds';
       duration       
 ---------------------
  @ 0.000055 secs ago
 (1 row)
 
-SELECT DURATION '-56 us';
+SELECT duration '-56 us';
       duration       
 ---------------------
  @ 0.000056 secs ago
 (1 row)
 
-SELECT DURATION '1 minute 2 h 3 microseconds 4 second 5 ms';
+SELECT duration '1 minute 2 h 3 microseconds 4 second 5 ms';
            duration            
 -------------------------------
  @ 2 hours 1 min 4.005003 secs
 (1 row)
 
-SELECT DURATION '36 minutes ago';
+SELECT duration '36 minutes ago';
    duration    
 ---------------
  @ 36 mins ago
 (1 row)
 
-SELECT DURATION '20:13:41';
+SELECT duration '20:13:41';
           duration          
 ----------------------------
  @ 20 hours 13 mins 41 secs
 (1 row)
 
-SELECT DURATION 'PT20:13:41';
+SELECT duration 'PT20:13:41';
           duration          
 ----------------------------
  @ 20 hours 13 mins 41 secs
 (1 row)
 
 -- Invalid duration input
-SELECT DURATION '100 millennium';
+SELECT duration '100 millennium';
 ERROR:  invalid units for duration
-LINE 1: SELECT DURATION '100 millennium';
+LINE 1: SELECT duration '100 millennium';
                         ^
-SELECT DURATION '101 millenniums';
+SELECT duration '101 millenniums';
 ERROR:  invalid units for duration
-LINE 1: SELECT DURATION '101 millenniums';
+LINE 1: SELECT duration '101 millenniums';
                         ^
-SELECT DURATION '102 century';
+SELECT duration '102 century';
 ERROR:  invalid units for duration
-LINE 1: SELECT DURATION '102 century';
+LINE 1: SELECT duration '102 century';
                         ^
-SELECT DURATION '103 centuries';
+SELECT duration '103 centuries';
 ERROR:  invalid units for duration
-LINE 1: SELECT DURATION '103 centuries';
+LINE 1: SELECT duration '103 centuries';
                         ^
-SELECT DURATION '104 decade';
+SELECT duration '104 decade';
 ERROR:  invalid units for duration
-LINE 1: SELECT DURATION '104 decade';
+LINE 1: SELECT duration '104 decade';
                         ^
-SELECT DURATION '105 decades';
+SELECT duration '105 decades';
 ERROR:  invalid units for duration
-LINE 1: SELECT DURATION '105 decades';
+LINE 1: SELECT duration '105 decades';
                         ^
-SELECT DURATION '106 year';
+SELECT duration '106 year';
 ERROR:  invalid units for duration
-LINE 1: SELECT DURATION '106 year';
+LINE 1: SELECT duration '106 year';
                         ^
-SELECT DURATION '107 years';
+SELECT duration '107 years';
 ERROR:  invalid units for duration
-LINE 1: SELECT DURATION '107 years';
+LINE 1: SELECT duration '107 years';
                         ^
-SELECT DURATION '108 y';
+SELECT duration '108 y';
 ERROR:  invalid units for duration
-LINE 1: SELECT DURATION '108 y';
+LINE 1: SELECT duration '108 y';
                         ^
-SELECT DURATION '109 month';
+SELECT duration '109 month';
 ERROR:  invalid units for duration
-LINE 1: SELECT DURATION '109 month';
+LINE 1: SELECT duration '109 month';
                         ^
-SELECT DURATION '110 months';
+SELECT duration '110 months';
 ERROR:  invalid units for duration
-LINE 1: SELECT DURATION '110 months';
+LINE 1: SELECT duration '110 months';
                         ^
-SELECT DURATION '111 week';
+SELECT duration '111 week';
 ERROR:  invalid units for duration
-LINE 1: SELECT DURATION '111 week';
+LINE 1: SELECT duration '111 week';
                         ^
-SELECT DURATION '112 weeks';
+SELECT duration '112 weeks';
 ERROR:  invalid units for duration
-LINE 1: SELECT DURATION '112 weeks';
+LINE 1: SELECT duration '112 weeks';
                         ^
-SELECT DURATION '113 w';
+SELECT duration '113 w';
 ERROR:  invalid units for duration
-LINE 1: SELECT DURATION '113 w';
+LINE 1: SELECT duration '113 w';
                         ^
-SELECT DURATION '114 day';
+SELECT duration '114 day';
 ERROR:  invalid units for duration
-LINE 1: SELECT DURATION '114 day';
+LINE 1: SELECT duration '114 day';
                         ^
-SELECT DURATION '115 days';
+SELECT duration '115 days';
 ERROR:  invalid units for duration
-LINE 1: SELECT DURATION '115 days';
+LINE 1: SELECT duration '115 days';
                         ^
-SELECT DURATION '116 d';
+SELECT duration '116 d';
 ERROR:  invalid units for duration
-LINE 1: SELECT DURATION '116 d';
+LINE 1: SELECT duration '116 d';
                         ^
-SELECT DURATION '5 seconds 2 days';
+SELECT duration '5 seconds 2 days';
 ERROR:  invalid units for duration
-LINE 1: SELECT DURATION '5 seconds 2 days';
+LINE 1: SELECT duration '5 seconds 2 days';
                         ^
-SELECT DURATION 'P1995-08-06T20:13:41';
+SELECT duration 'P1995-08-06T20:13:41';
 ERROR:  invalid units for duration
-LINE 1: SELECT DURATION 'P1995-08-06T20:13:41';
+LINE 1: SELECT duration 'P1995-08-06T20:13:41';
                         ^
 -- Comparison
-SELECT DURATION '1 sec' < DURATION '1 hour';
+SELECT duration '1 sec' < duration '1 hour';
  ?column? 
 ----------
  t
 (1 row)
 
-SELECT DURATION '1 millisecond' < DURATION '1 ms';
+SELECT duration '1 millisecond' < duration '1 ms';
  ?column? 
 ----------
  f
 (1 row)
 
-SELECT DURATION '1 minute' < DURATION '1 us';
+SELECT duration '1 minute' < duration '1 us';
  ?column? 
 ----------
  f
 (1 row)
 
-SELECT DURATION '1 sec' <= DURATION '1 hour';
+SELECT duration '1 sec' <= duration '1 hour';
  ?column? 
 ----------
  t
 (1 row)
 
-SELECT DURATION '1 millisecond' <= DURATION '1 ms';
+SELECT duration '1 millisecond' <= duration '1 ms';
  ?column? 
 ----------
  t
 (1 row)
 
-SELECT DURATION '1 minute' <= DURATION '1 us';
+SELECT duration '1 minute' <= duration '1 us';
  ?column? 
 ----------
  f
 (1 row)
 
-SELECT DURATION '1 sec' > DURATION '1 hour';
+SELECT duration '1 sec' > duration '1 hour';
  ?column? 
 ----------
  f
 (1 row)
 
-SELECT DURATION '1 millisecond' > DURATION '1 ms';
+SELECT duration '1 millisecond' > duration '1 ms';
  ?column? 
 ----------
  f
 (1 row)
 
-SELECT DURATION '1 minute' > DURATION '1 us';
+SELECT duration '1 minute' > duration '1 us';
  ?column? 
 ----------
  t
 (1 row)
 
-SELECT DURATION '1 sec' >= DURATION '1 hour';
+SELECT duration '1 sec' >= duration '1 hour';
  ?column? 
 ----------
  f
 (1 row)
 
-SELECT DURATION '1 millisecond' >= DURATION '1 ms';
+SELECT duration '1 millisecond' >= duration '1 ms';
  ?column? 
 ----------
  t
 (1 row)
 
-SELECT DURATION '1 minute' >= DURATION '1 us';
+SELECT duration '1 minute' >= duration '1 us';
  ?column? 
 ----------
  t
 (1 row)
 
-SELECT DURATION '1 sec' = DURATION '1 hour';
+SELECT duration '1 sec' = duration '1 hour';
  ?column? 
 ----------
  f
 (1 row)
 
-SELECT DURATION '1 millisecond' = DURATION '1 ms';
+SELECT duration '1 millisecond' = duration '1 ms';
  ?column? 
 ----------
  t
 (1 row)
 
-SELECT DURATION '1 minute' = DURATION '1 us';
+SELECT duration '1 minute' = duration '1 us';
  ?column? 
 ----------
  f
 (1 row)
 
-SELECT DURATION '1 sec' <> DURATION '1 hour';
+SELECT duration '1 sec' <> duration '1 hour';
  ?column? 
 ----------
  t
 (1 row)
 
-SELECT DURATION '1 millisecond' <> DURATION '1 ms';
+SELECT duration '1 millisecond' <> duration '1 ms';
  ?column? 
 ----------
  f
 (1 row)
 
-SELECT DURATION '1 minute' <> DURATION '1 us';
+SELECT duration '1 minute' <> duration '1 us';
  ?column? 
 ----------
  t
 (1 row)
 
 -- Arithmetic
-SELECT - DURATION '10 minutes';
+SELECT - duration '10 minutes';
    ?column?    
 ---------------
  @ 10 mins ago
 (1 row)
 
-SELECT DURATION '55 seconds' + DURATION '12 hours';
+SELECT duration '55 seconds' + duration '12 hours';
       ?column?      
 --------------------
  @ 12 hours 55 secs
 (1 row)
 
-SELECT DURATION '2 hours' - DURATION '30 minutes';
+SELECT duration '2 hours' - duration '30 minutes';
      ?column?     
 ------------------
  @ 1 hour 30 mins
 (1 row)
 
-SELECT - DURATION '-9223372036854775807 us';
+SELECT duration '42 minutes' * 10.5;
+     ?column?      
+-------------------
+ @ 7 hours 21 mins
+(1 row)
+
+SELECT duration '42 minutes' * 0.0;
+ ?column? 
+----------
+ @ 0
+(1 row)
+
+SELECT duration '5 hours 40 minutes 30 s' / 3.7;
+            ?column?            
+--------------------------------
+ @ 1 hour 32 mins 1.621622 secs
+(1 row)
+
+SELECT - duration '-9223372036854775807 us';
 ERROR:  duration out of range
-SELECT DURATION '9223372036854775806 us' + DURATION '1 us';
+SELECT duration '9223372036854775806 us' + duration '1 us';
 ERROR:  duration out of range
-SELECT DURATION '9223372036854775806 us' + DURATION '2 us';
+SELECT duration '9223372036854775806 us' + duration '2 us';
 ERROR:  duration out of range
-SELECT DURATION '-9223372036854775807 us' - DURATION '1 us';
+SELECT duration '-9223372036854775807 us' - duration '1 us';
 ERROR:  duration out of range
-SELECT DURATION '-9223372036854775807 us' - DURATION '2 us';
+SELECT duration '-9223372036854775807 us' - duration '2 us';
 ERROR:  duration out of range
+SELECT duration '4611686018427387903 us' * 2.5;
+ERROR:  duration out of range
+SELECT duration '4611686018427387903 us' * 'nan'::float8;
+ERROR:  duration out of range
+SELECT duration '4611686018427387903 us' * 'infinity'::float8;
+ ?column? 
+----------
+ infinity
+(1 row)
+
+SELECT duration '4611686018427387903 us' * '-infinity'::float8;
+ ?column?  
+-----------
+ -infinity
+(1 row)
+
+SELECT duration '0 us' * 'infinity'::float8;
+ERROR:  duration out of range
+SELECT duration '0 us' * '-infinity'::float8;
+ERROR:  duration out of range
+SELECT duration '-4611686018427387904 us' / 0.5;
+ERROR:  duration out of range
+SELECT duration '4611686018427387904 us' / 0.0;
+ERROR:  division by zero
+SELECT duration '4611686018427387904 us' / 'nan'::float8;
+ERROR:  duration out of range
+SELECT duration '4611686018427387903 us' / 'infinity'::float8;
+ ?column? 
+----------
+ @ 0
+(1 row)
+
+SELECT duration '4611686018427387903 us' / '-infinity'::float8;
+ ?column? 
+----------
+ @ 0
+(1 row)
+
 -- Infinity
-SELECT DURATION 'infinity';
+SELECT duration 'infinity';
  duration 
 ----------
  infinity
 (1 row)
 
-SELECT DURATION '-infinity';
+SELECT duration '-infinity';
  duration  
 -----------
  -infinity
 (1 row)
 
-SELECT - DURATION 'infinity';
+SELECT duration 'infinity' > duration '999 hours';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT duration 'infinity' >= duration '999 hours';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT duration 'infinity' < duration '999 hours';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT duration 'infinity' <= duration '999 hours';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT duration 'infinity' = duration '999 hours';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT duration 'infinity' <> duration '999 hours';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT duration '-infinity' > duration '999 hours';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT duration '-infinity' >= duration '999 hours';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT duration '-infinity' < duration '999 hours';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT duration '-infinity' <= duration '999 hours';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT duration '-infinity' = duration '999 hours';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT duration '-infinity' <> duration '999 hours';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT duration 'infinity' > duration 'infinity';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT duration 'infinity' >= duration 'infinity';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT duration 'infinity' < duration 'infinity';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT duration 'infinity' <= duration 'infinity';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT duration 'infinity' = duration 'infinity';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT duration 'infinity' <> duration 'infinity';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT duration 'infinity' > duration '-infinity';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT duration 'infinity' >= duration '-infinity';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT duration 'infinity' < duration '-infinity';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT duration 'infinity' <= duration '-infinity';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT duration 'infinity' = duration '-infinity';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT duration 'infinity' <> duration '-infinity';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT duration '-infinity' > duration 'infinity';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT duration '-infinity' >= duration 'infinity';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT duration '-infinity' < duration 'infinity';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT duration '-infinity' <= duration 'infinity';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT duration '-infinity' = duration 'infinity';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT duration '-infinity' <> duration 'infinity';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT duration '-infinity' > duration '-infinity';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT duration '-infinity' >= duration '-infinity';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT duration '-infinity' < duration '-infinity';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT duration '-infinity' <= duration '-infinity';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT duration '-infinity' = duration '-infinity';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT duration '-infinity' <> duration '-infinity';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT - duration 'infinity';
  ?column?  
 -----------
  -infinity
 (1 row)
 
-SELECT - DURATION '-infinity';
+SELECT - duration '-infinity';
  ?column? 
 ----------
  infinity
 (1 row)
 
-SELECT DURATION 'infinity' + DURATION '42 ms';
+SELECT duration 'infinity' + duration '42 ms';
  ?column? 
 ----------
  infinity
 (1 row)
 
-SELECT DURATION '-infinity' + DURATION '42 ms';
+SELECT duration '-infinity' + duration '42 ms';
  ?column?  
 -----------
  -infinity
 (1 row)
 
-SELECT DURATION 'infinity' + DURATION 'infinity';
+SELECT duration 'infinity' + duration 'infinity';
  ?column? 
 ----------
  infinity
 (1 row)
 
-SELECT DURATION 'infinity' + DURATION '-infinity';
+SELECT duration 'infinity' + duration '-infinity';
 ERROR:  duration out of range
-SELECT DURATION '-infinity' + DURATION 'infinity';
+SELECT duration '-infinity' + duration 'infinity';
 ERROR:  duration out of range
-SELECT DURATION '-infinity' + DURATION '-infinity';
+SELECT duration '-infinity' + duration '-infinity';
  ?column?  
 -----------
  -infinity
 (1 row)
 
-SELECT DURATION 'infinity' - DURATION '42 ms';
+SELECT duration 'infinity' - duration '42 ms';
  ?column? 
 ----------
  infinity
 (1 row)
 
-SELECT DURATION '-infinity' - DURATION '42 ms';
+SELECT duration '-infinity' - duration '42 ms';
  ?column?  
 -----------
  -infinity
 (1 row)
 
-SELECT DURATION 'infinity' - DURATION 'infinity';
+SELECT duration 'infinity' - duration 'infinity';
 ERROR:  duration out of range
-SELECT DURATION 'infinity' - DURATION '-infinity';
+SELECT duration 'infinity' - duration '-infinity';
  ?column? 
 ----------
  infinity
 (1 row)
 
-SELECT DURATION '-infinity' - DURATION 'infinity';
+SELECT duration '-infinity' - duration 'infinity';
  ?column?  
 -----------
  -infinity
 (1 row)
 
-SELECT DURATION '-infinity' - DURATION '-infinity';
+SELECT duration '-infinity' - duration '-infinity';
 ERROR:  duration out of range
-SELECT DURATION 'infinity' > DURATION '999 hours';
+SELECT duration 'infinity' * 15.6;
  ?column? 
 ----------
- t
+ infinity
 (1 row)
 
-SELECT DURATION 'infinity' >= DURATION '999 hours';
+SELECT duration 'infinity' * -15.6;
+ ?column?  
+-----------
+ -infinity
+(1 row)
+
+SELECT duration 'infinity' * 'infinity'::float8;
  ?column? 
 ----------
- t
+ infinity
 (1 row)
 
-SELECT DURATION 'infinity' < DURATION '999 hours';
+SELECT duration 'infinity' * '-infinity'::float8;
+ ?column?  
+-----------
+ -infinity
+(1 row)
+
+SELECT duration 'infinity' * 'nan'::float8;
+ERROR:  duration out of range
+SELECT duration 'infinity' * 0.0;
+ERROR:  duration out of range
+SELECT duration '-infinity' * 15.6;
+ ?column?  
+-----------
+ -infinity
+(1 row)
+
+SELECT duration '-infinity' * -15.6;
  ?column? 
 ----------
- f
+ infinity
 (1 row)
 
-SELECT DURATION 'infinity' <= DURATION '999 hours';
+SELECT duration '-infinity' * 'infinity'::float8;
+ ?column?  
+-----------
+ -infinity
+(1 row)
+
+SELECT duration '-infinity' * '-infinity'::float8;
  ?column? 
 ----------
- f
+ infinity
 (1 row)
 
-SELECT DURATION 'infinity' = DURATION '999 hours';
+SELECT duration '-infinity' * 'nan'::float8;
+ERROR:  duration out of range
+SELECT duration '-infinity' * 0.0;
+ERROR:  duration out of range
+SELECT duration 'infinity' / 32.1;
  ?column? 
 ----------
- f
+ infinity
 (1 row)
 
-SELECT DURATION 'infinity' <> DURATION '999 hours';
+SELECT duration 'infinity' / -32.1;
+ ?column?  
+-----------
+ -infinity
+(1 row)
+
+SELECT duration 'infinity' / 'infinity'::float8;
+ERROR:  duration out of range
+SELECT duration 'infinity' / '-infinity'::float8;
+ERROR:  duration out of range
+SELECT duration 'infinity' / 'nan'::float8;
+ERROR:  duration out of range
+SELECT duration 'infinity' / 0.0;
+ERROR:  division by zero
+SELECT duration '-infinity' / 32.1;
+ ?column?  
+-----------
+ -infinity
+(1 row)
+
+SELECT duration '-infinity' / -32.1;
  ?column? 
 ----------
- t
+ infinity
 (1 row)
 
-SELECT DURATION '-infinity' > DURATION '999 hours';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT DURATION '-infinity' >= DURATION '999 hours';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT DURATION '-infinity' < DURATION '999 hours';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT DURATION '-infinity' <= DURATION '999 hours';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT DURATION '-infinity' = DURATION '999 hours';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT DURATION '-infinity' <> DURATION '999 hours';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT DURATION 'infinity' > DURATION 'infinity';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT DURATION 'infinity' >= DURATION 'infinity';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT DURATION 'infinity' < DURATION 'infinity';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT DURATION 'infinity' <= DURATION 'infinity';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT DURATION 'infinity' = DURATION 'infinity';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT DURATION 'infinity' <> DURATION 'infinity';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT DURATION 'infinity' > DURATION '-infinity';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT DURATION 'infinity' >= DURATION '-infinity';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT DURATION 'infinity' < DURATION '-infinity';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT DURATION 'infinity' <= DURATION '-infinity';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT DURATION 'infinity' = DURATION '-infinity';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT DURATION 'infinity' <> DURATION '-infinity';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT DURATION '-infinity' > DURATION 'infinity';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT DURATION '-infinity' >= DURATION 'infinity';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT DURATION '-infinity' < DURATION 'infinity';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT DURATION '-infinity' <= DURATION 'infinity';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT DURATION '-infinity' = DURATION 'infinity';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT DURATION '-infinity' <> DURATION 'infinity';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT DURATION '-infinity' > DURATION '-infinity';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT DURATION '-infinity' >= DURATION '-infinity';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT DURATION '-infinity' < DURATION '-infinity';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT DURATION '-infinity' <= DURATION '-infinity';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT DURATION '-infinity' = DURATION '-infinity';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT DURATION '-infinity' <> DURATION '-infinity';
- ?column? 
-----------
- f
-(1 row)
-
+SELECT duration '-infinity' / 'infinity'::float8;
+ERROR:  duration out of range
+SELECT duration '-infinity' / '-infinity'::float8;
+ERROR:  duration out of range
+SELECT duration '-infinity' / 'nan'::float8;
+ERROR:  duration out of range
+SELECT duration '-infinity' / 0.0;
+ERROR:  division by zero
 -- This matches PostgreSQL semantics, but is probably incorrect.
-SELECT DURATION '9223372036854775807 us';
+SELECT duration '9223372036854775807 us';
  duration 
 ----------
  infinity
 (1 row)
 
-SELECT DURATION '-9223372036854775808 us';
+SELECT duration '-9223372036854775808 us';
  duration  
 -----------
  -infinity
@@ -733,7 +885,7 @@ SELECT DURATION '-9223372036854775808 us';
 DROP SCHEMA IF EXISTS regress CASCADE;
 NOTICE:  schema "regress" does not exist, skipping
 CREATE SCHEMA regress;
-CREATE TABLE regress.t (d1 DURATION, d2 DURATION);
+CREATE TABLE regress.t (d1 duration, d2 duration);
 CREATE INDEX idx1 ON regress.t USING BTREE (d1);
 CREATE INDEX idx2 ON regress.t USING HASH (d2);
 INSERT INTO regress.t VALUES ('1 s 6 m', '5 us'), ('500ms 4 h', '42 seconds 3 us'), ('666 hours', '999 min');
