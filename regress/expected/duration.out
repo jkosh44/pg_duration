@@ -19,32 +19,28 @@ VALUES
 	('53 ms'),
 	('54 microsecond'),
 	('55 microseconds'),
-	('56 us');
-SELECT s, s::duration, ('-' || s)::duration FROM input_table;
-        s        |        s        |      duration       
------------------+-----------------+---------------------
- 42 hour         | @ 42 hours      | @ 42 hours ago
- 43 hours        | @ 43 hours      | @ 43 hours ago
- 44 h            | @ 44 hours      | @ 44 hours ago
- 45 minute       | @ 45 mins       | @ 45 mins ago
- 46 minutes      | @ 46 mins       | @ 46 mins ago
- 47 m            | @ 47 mins       | @ 47 mins ago
- 48 second       | @ 48 secs       | @ 48 secs ago
- 49 seconds      | @ 49 secs       | @ 49 secs ago
- 50 s            | @ 50 secs       | @ 50 secs ago
- 51 millisecond  | @ 0.051 secs    | @ 0.051 secs ago
- 52 milliseconds | @ 0.052 secs    | @ 0.052 secs ago
- 53 ms           | @ 0.053 secs    | @ 0.053 secs ago
- 54 microsecond  | @ 0.000054 secs | @ 0.000054 secs ago
- 55 microseconds | @ 0.000055 secs | @ 0.000055 secs ago
- 56 us           | @ 0.000056 secs | @ 0.000056 secs ago
-(15 rows)
-
-SELECT duration '1 minute 2 h 3 microseconds 4 second 5 ms';
-           duration            
--------------------------------
- @ 2 hours 1 min 4.005003 secs
-(1 row)
+	('56 us'),
+	('1 minute 2 h 3 microseconds 4 second 5 ms');
+SELECT s, s::duration AS dur, ('-' || s)::duration AS neg_dur FROM input_table;
+                     s                     |              dur              |            neg_dur             
+-------------------------------------------+-------------------------------+--------------------------------
+ 42 hour                                   | @ 42 hours                    | @ 42 hours ago
+ 43 hours                                  | @ 43 hours                    | @ 43 hours ago
+ 44 h                                      | @ 44 hours                    | @ 44 hours ago
+ 45 minute                                 | @ 45 mins                     | @ 45 mins ago
+ 46 minutes                                | @ 46 mins                     | @ 46 mins ago
+ 47 m                                      | @ 47 mins                     | @ 47 mins ago
+ 48 second                                 | @ 48 secs                     | @ 48 secs ago
+ 49 seconds                                | @ 49 secs                     | @ 49 secs ago
+ 50 s                                      | @ 50 secs                     | @ 50 secs ago
+ 51 millisecond                            | @ 0.051 secs                  | @ 0.051 secs ago
+ 52 milliseconds                           | @ 0.052 secs                  | @ 0.052 secs ago
+ 53 ms                                     | @ 0.053 secs                  | @ 0.053 secs ago
+ 54 microsecond                            | @ 0.000054 secs               | @ 0.000054 secs ago
+ 55 microseconds                           | @ 0.000055 secs               | @ 0.000055 secs ago
+ 56 us                                     | @ 0.000056 secs               | @ 0.000056 secs ago
+ 1 minute 2 h 3 microseconds 4 second 5 ms | @ 2 hours 1 min 4.005003 secs | @ 1 hour 59 mins 4.005003 secs
+(16 rows)
 
 SELECT duration '36 minutes ago';
    duration    
@@ -429,6 +425,55 @@ SELECT extract_duration('week', d) FROM func_table;
 ERROR:  unit "week" not supported for type duration
 SELECT extract_duration('day', d) FROM func_table;
 ERROR:  unit "day" not supported for type duration
+-- Casts
+-- Valid
+SELECT
+	s, s::duration::interval AS interval, s::duration::interval::duration AS dur
+FROM
+	(SELECT s FROM input_table UNION ALL SELECT '-' || s FROM input_table);
+                     s                      |            interval            |              dur               
+--------------------------------------------+--------------------------------+--------------------------------
+ 42 hour                                    | @ 42 hours                     | @ 42 hours
+ 43 hours                                   | @ 43 hours                     | @ 43 hours
+ 44 h                                       | @ 44 hours                     | @ 44 hours
+ 45 minute                                  | @ 45 mins                      | @ 45 mins
+ 46 minutes                                 | @ 46 mins                      | @ 46 mins
+ 47 m                                       | @ 47 mins                      | @ 47 mins
+ 48 second                                  | @ 48 secs                      | @ 48 secs
+ 49 seconds                                 | @ 49 secs                      | @ 49 secs
+ 50 s                                       | @ 50 secs                      | @ 50 secs
+ 51 millisecond                             | @ 0.051 secs                   | @ 0.051 secs
+ 52 milliseconds                            | @ 0.052 secs                   | @ 0.052 secs
+ 53 ms                                      | @ 0.053 secs                   | @ 0.053 secs
+ 54 microsecond                             | @ 0.000054 secs                | @ 0.000054 secs
+ 55 microseconds                            | @ 0.000055 secs                | @ 0.000055 secs
+ 56 us                                      | @ 0.000056 secs                | @ 0.000056 secs
+ 1 minute 2 h 3 microseconds 4 second 5 ms  | @ 2 hours 1 min 4.005003 secs  | @ 2 hours 1 min 4.005003 secs
+ -42 hour                                   | @ 42 hours ago                 | @ 42 hours ago
+ -43 hours                                  | @ 43 hours ago                 | @ 43 hours ago
+ -44 h                                      | @ 44 hours ago                 | @ 44 hours ago
+ -45 minute                                 | @ 45 mins ago                  | @ 45 mins ago
+ -46 minutes                                | @ 46 mins ago                  | @ 46 mins ago
+ -47 m                                      | @ 47 mins ago                  | @ 47 mins ago
+ -48 second                                 | @ 48 secs ago                  | @ 48 secs ago
+ -49 seconds                                | @ 49 secs ago                  | @ 49 secs ago
+ -50 s                                      | @ 50 secs ago                  | @ 50 secs ago
+ -51 millisecond                            | @ 0.051 secs ago               | @ 0.051 secs ago
+ -52 milliseconds                           | @ 0.052 secs ago               | @ 0.052 secs ago
+ -53 ms                                     | @ 0.053 secs ago               | @ 0.053 secs ago
+ -54 microsecond                            | @ 0.000054 secs ago            | @ 0.000054 secs ago
+ -55 microseconds                           | @ 0.000055 secs ago            | @ 0.000055 secs ago
+ -56 us                                     | @ 0.000056 secs ago            | @ 0.000056 secs ago
+ -1 minute 2 h 3 microseconds 4 second 5 ms | @ 1 hour 59 mins 4.005003 secs | @ 1 hour 59 mins 4.005003 secs
+(32 rows)
+
+-- Invalid
+SELECT (interval '1 month')::duration;
+ERROR:  invalid units for duration
+SELECT (interval '1 day')::duration;
+ERROR:  invalid units for duration
+SELECT (interval '1 month 2 days 3 hours')::duration;
+ERROR:  invalid units for duration
 -- Infinity
 -- Create helper tables
 CREATE TEMP TABLE inf_table(d duration);
@@ -888,6 +933,19 @@ SELECT extract_duration('week', duration '-infinity');
 ERROR:  unit "week" not supported for type duration
 SELECT extract_duration('day', duration '-infinity');
 ERROR:  unit "day" not supported for type duration
+-- Casts
+SELECT
+	d, d::INTERVAL AS interval, d::INTERVAL::duration AS dur
+FROM
+	inf_table
+WHERE
+	NOT isfinite(d);
+     d     | interval  |    dur    
+-----------+-----------+-----------
+ infinity  | infinity  | infinity
+ -infinity | -infinity | -infinity
+(2 rows)
+
 -- Overflow
 -- This matches PostgreSQL semantics, but is probably incorrect.
 SELECT duration '9223372036854775807 us';
