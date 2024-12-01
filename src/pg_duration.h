@@ -26,8 +26,9 @@ DurationGetDatum(const Duration X)
 #define PG_GETARG_DURATION(n) DatumGetDuration(PG_GETARG_DATUM(n))
 #define PG_RETURN_DURATION(x) return DurationGetDatum(x)
 
-void		duration2itm(Duration span, struct pg_itm *itm);
-int			itmin2duration(struct pg_itm_in *itm_in, Duration * span);
+void		duration2itm(Duration duration, struct pg_itm *itm);
+int			itm2duration(struct pg_itm *itm, Duration *duration);
+int			itmin2duration(struct pg_itm_in *itm_in, Duration *duration);
 
 /*
  * We reserve the minumum and maximum int64 value to represent

@@ -9,11 +9,15 @@
 
 #include <math.h>
 
+#include "parser/scansup.h"
 #include "common/int.h"
 #include "fmgr.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
+#include "utils/float.h"
 #include "utils/fmgrprotos.h"
+#include "utils/numeric.h"
+#include "varatt.h"
 
 #include "pg_duration.h"
 
@@ -51,6 +55,15 @@ PG_FUNCTION_INFO_V1(duration_pl);
 PG_FUNCTION_INFO_V1(duration_mi);
 PG_FUNCTION_INFO_V1(duration_mul);
 PG_FUNCTION_INFO_V1(duration_div);
+
+/*
+** Public routines
+*/
+PG_FUNCTION_INFO_V1(make_duration);
+PG_FUNCTION_INFO_V1(duration_finite);
+PG_FUNCTION_INFO_V1(duration_trunc);
+PG_FUNCTION_INFO_V1(duration_part);
+PG_FUNCTION_INFO_V1(extract_duration);
 
 static void EncodeSpecialDuration(const Duration duration, char *str);
 static Duration duration_um_internal(const Duration duration);
@@ -194,6 +207,34 @@ duration2itm(Duration duration, struct pg_itm *itm)
 	time -= tfrac * USECS_PER_SEC;
 	itm->tm_sec = (int) tfrac;
 	itm->tm_usec = (int) time;
+}
+
+/* itm2duration()
+ * Convert a pg_itm structure to a Duration.
+ * Returns 0 if OK, -1 on overflow.
+ *
+ * This is for use in computations expected to produce finite results.  Any
+ * inputs that lead to infinite results are treated as overflows.
+ */
+int
+itm2duration(struct pg_itm *itm, Duration *duration)
+{
+	if (pg_mul_s64_overflow(itm->tm_hour, USECS_PER_HOUR,
+							duration))
+		return -1;
+	/* tm_min, tm_sec are 32 bits, so intermediate products can't overflow */
+	if (pg_add_s64_overflow(*duration, itm->tm_min * USECS_PER_MINUTE,
+							duration))
+		return -1;
+	if (pg_add_s64_overflow(*duration, itm->tm_sec * USECS_PER_SEC,
+							duration))
+		return -1;
+	if (pg_add_s64_overflow(*duration, itm->tm_usec,
+							duration))
+		return -1;
+	if (DURATION_NOT_FINITE(*duration))
+		return -1;
+	return 0;
 }
 
 /* itmin2duration()
@@ -579,4 +620,310 @@ out_of_range:
 			errmsg("duration out of range"));
 
 	PG_RETURN_NULL();			/* keep compiler quiet */
+}
+
+/*****************************************************************************
+ *				   Public routines
+ *****************************************************************************/
+
+/*
+ * make_duration - numeric Duration constructor
+ */
+Datum
+make_duration(PG_FUNCTION_ARGS)
+{
+	int32		hours = PG_GETARG_INT32(0);
+	int32		mins = PG_GETARG_INT32(1);
+	double		secs = PG_GETARG_FLOAT8(2);
+	Duration	result;
+
+	/*
+	 * Reject out-of-range inputs.  We reject any input values that cause
+	 * integer overflow of the corresponding interval fields.
+	 */
+	if (isinf(secs) || isnan(secs))
+		goto out_of_range;
+
+	/* hours and mins -> usecs (cannot overflow 64-bit) */
+	result = hours * USECS_PER_HOUR + mins * USECS_PER_MINUTE;
+
+	/* secs -> usecs */
+	secs = rint(float8_mul(secs, USECS_PER_SEC));
+	if (!FLOAT8_FITS_IN_INT64(secs) ||
+		pg_add_s64_overflow(result, (int64) secs, &result))
+		goto out_of_range;
+
+	/* make sure that the result is finite */
+	if (DURATION_NOT_FINITE(result))
+		goto out_of_range;
+
+	PG_RETURN_DURATION(result);
+
+out_of_range:
+	ereport(ERROR,
+			errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+			errmsg("duration out of range"));
+
+	PG_RETURN_NULL();			/* keep compiler quiet */
+}
+
+Datum
+duration_finite(PG_FUNCTION_ARGS)
+{
+	Duration	duration = PG_GETARG_DURATION(0);
+
+	PG_RETURN_BOOL(!DURATION_NOT_FINITE(duration));
+}
+
+Datum
+duration_trunc(PG_FUNCTION_ARGS)
+{
+	text	   *units = PG_GETARG_TEXT_PP(0);
+	Duration	duration = PG_GETARG_DURATION(1);
+	Duration	result;
+	int			type,
+				val;
+	char	   *lowunits;
+	struct pg_itm tt,
+			   *tm = &tt;
+
+	if (DURATION_NOT_FINITE(duration))
+	{
+		result = duration;
+		PG_RETURN_DURATION(result);
+	}
+
+	lowunits = downcase_truncate_identifier(VARDATA_ANY(units),
+											VARSIZE_ANY_EXHDR(units),
+											false);
+
+	type = DecodeUnits(0, lowunits, &val);
+
+	if (type == UNITS)
+	{
+		duration2itm(duration, tm);
+		switch (val)
+		{
+			case DTK_HOUR:
+				tm->tm_min = 0;
+				/* FALL THRU */
+			case DTK_MINUTE:
+				tm->tm_sec = 0;
+				/* FALL THRU */
+			case DTK_SECOND:
+				tm->tm_usec = 0;
+				break;
+			case DTK_MILLISEC:
+				tm->tm_usec = (tm->tm_usec / 1000) * 1000;
+				break;
+			case DTK_MICROSEC:
+				break;
+
+			default:
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("unit \"%s\" not supported for type duration",
+								lowunits)));
+		}
+
+		if (itm2duration(tm, &result) != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("duration out of range")));
+	}
+	else
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("unit \"%s\" not recognized for type duration",
+						lowunits)));
+	}
+
+	PG_RETURN_DURATION(result);
+}
+
+/*
+ * NonFiniteDurationPart
+ *
+ *	Used by duration_part when extracting from infinite duration.  Returns
+ *	+/-Infinity if that is the appropriate result, otherwise returns zero
+ *	(which should be taken as meaning to return NULL).
+ *
+ *	Errors thrown here for invalid units should exactly match those that
+ *	would be thrown in the calling functions, else there will be unexpected
+ *	discrepancies between finite- and infinite-input cases.
+ */
+static float8
+NonFiniteDurationPart(int type, int unit, char *lowunits, bool isNegative)
+{
+	if ((type != UNITS) && (type != RESERV))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("unit \"%s\" not recognized for type duration",
+						lowunits)));
+
+	switch (unit)
+	{
+			/* Oscillating units */
+		case DTK_MICROSEC:
+		case DTK_MILLISEC:
+		case DTK_SECOND:
+		case DTK_MINUTE:
+			return 0.0;
+
+			/* Monotonically-increasing units */
+		case DTK_HOUR:
+		case DTK_EPOCH:
+			if (isNegative)
+				return -get_float8_infinity();
+			else
+				return get_float8_infinity();
+
+		default:
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("unit \"%s\" not supported for type duration",
+							lowunits)));
+			return 0.0;			/* keep compiler quiet */
+	}
+}
+
+static Datum
+duration_part_common(PG_FUNCTION_ARGS, bool retnumeric)
+{
+	text	   *units = PG_GETARG_TEXT_PP(0);
+	Duration	duration = PG_GETARG_DURATION(1);
+	int64		intresult;
+	int			type,
+				val;
+	char	   *lowunits;
+	struct pg_itm tt,
+			   *tm = &tt;
+
+	lowunits = downcase_truncate_identifier(VARDATA_ANY(units),
+											VARSIZE_ANY_EXHDR(units),
+											false);
+
+	type = DecodeUnits(0, lowunits, &val);
+	if (type == UNKNOWN_FIELD)
+		type = DecodeSpecial(0, lowunits, &val);
+
+	if (DURATION_NOT_FINITE(duration))
+	{
+		double		r = NonFiniteDurationPart(type, val, lowunits,
+											  DURATION_IS_NOBEGIN(duration));
+
+		if (r != 0.0)
+		{
+			if (retnumeric)
+			{
+				if (r < 0)
+					return DirectFunctionCall3(numeric_in,
+											   CStringGetDatum("-Infinity"),
+											   ObjectIdGetDatum(InvalidOid),
+											   Int32GetDatum(-1));
+				else if (r > 0)
+					return DirectFunctionCall3(numeric_in,
+											   CStringGetDatum("Infinity"),
+											   ObjectIdGetDatum(InvalidOid),
+											   Int32GetDatum(-1));
+			}
+			else
+				PG_RETURN_FLOAT8(r);
+		}
+		else
+			PG_RETURN_NULL();
+	}
+
+	if (type == UNITS)
+	{
+		duration2itm(duration, tm);
+		switch (val)
+		{
+			case DTK_MICROSEC:
+				intresult = tm->tm_sec * INT64CONST(1000000) + tm->tm_usec;
+				break;
+
+			case DTK_MILLISEC:
+				if (retnumeric)
+					/*---
+					 * tm->tm_sec * 1000 + fsec / 1000
+					 * = (tm->tm_sec * 1'000'000 + fsec) / 1000
+					 */
+					PG_RETURN_NUMERIC(int64_div_fast_to_numeric(tm->tm_sec * INT64CONST(1000000) + tm->tm_usec, 3));
+				else
+					PG_RETURN_FLOAT8(tm->tm_sec * 1000.0 + tm->tm_usec / 1000.0);
+				break;
+
+			case DTK_SECOND:
+				if (retnumeric)
+					/*---
+					 * tm->tm_sec + fsec / 1'000'000
+					 * = (tm->tm_sec * 1'000'000 + fsec) / 1'000'000
+					 */
+					PG_RETURN_NUMERIC(int64_div_fast_to_numeric(tm->tm_sec * INT64CONST(1000000) + tm->tm_usec, 6));
+				else
+					PG_RETURN_FLOAT8(tm->tm_sec + tm->tm_usec / 1000000.0);
+				break;
+
+			case DTK_MINUTE:
+				intresult = tm->tm_min;
+				break;
+
+			case DTK_HOUR:
+				intresult = tm->tm_hour;
+				break;
+
+			default:
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("unit \"%s\" not supported for type duration",
+								lowunits)));
+				intresult = 0;
+		}
+	}
+	else if (type == RESERV && val == DTK_EPOCH)
+	{
+		if (retnumeric)
+		{
+			Numeric		result;
+
+			result = int64_div_fast_to_numeric(duration, 6);
+
+			PG_RETURN_NUMERIC(result);
+		}
+		else
+		{
+			float8		result;
+
+			result = duration / 1000000.0;
+
+			PG_RETURN_FLOAT8(result);
+		}
+	}
+	else
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("unit \"%s\" not recognized for type duration",
+						lowunits)));
+		intresult = 0;
+	}
+
+	if (retnumeric)
+		PG_RETURN_NUMERIC(int64_to_numeric(intresult));
+	else
+		PG_RETURN_FLOAT8(intresult);
+}
+
+Datum
+duration_part(PG_FUNCTION_ARGS)
+{
+	return duration_part_common(fcinfo, false);
+}
+
+Datum
+extract_duration(PG_FUNCTION_ARGS)
+{
+	return duration_part_common(fcinfo, true);
 }

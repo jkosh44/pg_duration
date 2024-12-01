@@ -135,6 +135,33 @@ LANGUAGE C STRICT IMMUTABLE;
 COMMENT ON FUNCTION duration_div(duration, float8) IS
 'division';
 
+-- Public routines
+
+CREATE FUNCTION make_duration(hours int4 DEFAULT 0, mins int4 DEFAULT 0, secs float8 DEFAULT 0.0)
+RETURNS duration
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE FUNCTION isfinite(duration)
+RETURNS bool
+AS 'MODULE_PATHNAME', 'duration_finite'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE FUNCTION date_trunc(text, duration)
+RETURNS duration
+AS 'MODULE_PATHNAME', 'duration_trunc'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE FUNCTION date_part(text, duration)
+RETURNS float8
+AS 'MODULE_PATHNAME', 'duration_part'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE FUNCTION extract_duration(text, duration)
+RETURNS numeric
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
 -- Define duration type
 
 CREATE TYPE duration (
