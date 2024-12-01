@@ -65,6 +65,12 @@ PG_FUNCTION_INFO_V1(duration_trunc);
 PG_FUNCTION_INFO_V1(duration_part);
 PG_FUNCTION_INFO_V1(extract_duration);
 
+/*
+** Casts
+*/
+PG_FUNCTION_INFO_V1(duration_interval);
+PG_FUNCTION_INFO_V1(interval_duration);
+
 static void EncodeSpecialDuration(const Duration duration, char *str);
 static Duration duration_um_internal(const Duration duration);
 
@@ -926,4 +932,63 @@ Datum
 extract_duration(PG_FUNCTION_ARGS)
 {
 	return duration_part_common(fcinfo, true);
+}
+
+/*****************************************************************************
+ *				   Casts
+ *****************************************************************************/
+
+Datum
+duration_interval(PG_FUNCTION_ARGS)
+{
+	Duration	duration = PG_GETARG_DURATION(0);
+	Interval   *result;
+
+	result = (Interval *) palloc(sizeof(Interval));
+
+	if (DURATION_IS_NOBEGIN(duration))
+	{
+		INTERVAL_NOBEGIN(result);
+	}
+	else if (DURATION_IS_NOEND(duration))
+	{
+		INTERVAL_NOEND(result);
+	}
+	else
+	{
+		result->time = duration;
+		result->day = 0;
+		result->month = 0;
+	}
+
+	PG_RETURN_INTERVAL_P(result);
+}
+
+Datum
+interval_duration(PG_FUNCTION_ARGS)
+{
+	Interval   *interval = PG_GETARG_INTERVAL_P(0);
+	struct Node *escontext = fcinfo->context;
+	Duration	result;
+
+	if (INTERVAL_IS_NOBEGIN(interval))
+	{
+		DURATION_NOBEGIN(result);
+	}
+	else if (INTERVAL_IS_NOEND(interval))
+	{
+		DURATION_NOEND(result);
+	}
+	else if (interval->month != 0 || interval->day != 0)
+	{
+		ereturn(escontext, (Datum) 0,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("invalid units for duration")));
+	}
+	else
+	{
+		result = interval->time;
+	}
+
+	PG_RETURN_DURATION(result);
 }

@@ -162,6 +162,18 @@ RETURNS numeric
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
+-- Casts
+
+CREATE FUNCTION duration_interval(duration)
+RETURNS interval
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE FUNCTION interval_duration(interval)
+RETURNS duration
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
 -- Define duration type
 
 CREATE TYPE duration (
@@ -288,3 +300,12 @@ CREATE OPERATOR CLASS duration_ops
     DEFAULT FOR TYPE duration USING hash AS
     OPERATOR    1   =,
     FUNCTION    1   hash_duration(duration);
+
+-- Create casts
+
+CREATE CAST (duration AS interval)
+    WITH FUNCTION duration_interval(duration)
+    AS IMPLICIT;
+
+CREATE CAST (interval AS duration)
+    WITH FUNCTION interval_duration(interval);

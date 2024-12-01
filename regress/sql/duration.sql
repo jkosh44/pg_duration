@@ -21,11 +21,10 @@ VALUES
 	('53 ms'),
 	('54 microsecond'),
 	('55 microseconds'),
-	('56 us');
-SELECT s, s::duration, ('-' || s)::duration FROM input_table;
-SELECT duration '1 minute 2 h 3 microseconds 4 second 5 ms';
+	('56 us'),
+	('1 minute 2 h 3 microseconds 4 second 5 ms');
+SELECT s, s::duration AS dur, ('-' || s)::duration AS neg_dur FROM input_table;
 SELECT duration '36 minutes ago';
-
 SELECT duration '20:13:41';
 SELECT duration 'PT20:13:41';
 
@@ -172,6 +171,19 @@ SELECT extract_duration('month', d) FROM func_table;
 SELECT extract_duration('week', d) FROM func_table;
 SELECT extract_duration('day', d) FROM func_table;
 
+-- Casts
+
+-- Valid
+SELECT
+	s, s::duration::interval AS interval, s::duration::interval::duration AS dur
+FROM
+	(SELECT s FROM input_table UNION ALL SELECT '-' || s FROM input_table);
+-- Invalid
+SELECT (interval '1 month')::duration;
+SELECT (interval '1 day')::duration;
+SELECT (interval '1 month 2 days 3 hours')::duration;
+
+
 -- Infinity
 
 -- Create helper tables
@@ -300,6 +312,13 @@ SELECT extract_duration('quarter', duration '-infinity');
 SELECT extract_duration('month', duration '-infinity');
 SELECT extract_duration('week', duration '-infinity');
 SELECT extract_duration('day', duration '-infinity');
+-- Casts
+SELECT
+	d, d::INTERVAL AS interval, d::INTERVAL::duration AS dur
+FROM
+	inf_table
+WHERE
+	NOT isfinite(d);
 -- Overflow
 -- This matches PostgreSQL semantics, but is probably incorrect.
 SELECT duration '9223372036854775807 us';
