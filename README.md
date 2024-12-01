@@ -51,12 +51,22 @@ units larger than hours.
 | `- duration` -> `duration`          | Negate a duration     | `- duration '450 milliseconds'` -> `-00:00:00.45`      |
 | `duration * float8` -> `duration`   | Multiply a duration   | `duration '3 hours' * 2.5` -> `07:30:00`               |
 | `duration / float8` -> `duration`   | Divide a duration     | `duration '3 hours' / 2.5` -> `01:12:00`               |
-| `duration < duration` -> `bool`     | Less than             | `duration '10 min' < duration '1 hour'` -> `t`         |
-| `duration <= duration` -> `bool`    | Less than or equal    | `duration '10 min' <= duration '1 hour'` -> `t`        |
-| `duration > duration` -> `bool`     | Greater than          | `duration '10 min' > duration '1 hour'` -> `f`         |
-| `duration >= duration` -> `bool`    | Greater than or equal | `duration '10 min' >= duration '1 hour'` -> `f`        |
-| `duration = duration` -> `bool`     | Equal                 | `duration '10 min' = duration '1 hour'` -> `f`         |
-| `duration <> duration` -> `bool`    | Not equal             | `duration '10 min' <> duration '1 hour'` -> `t`        |
+| `duration < duration` -> `boolean`  | Less than             | `duration '10 min' < duration '1 hour'` -> `t`         |
+| `duration <= duration` -> `boolean` | Less than or equal    | `duration '10 min' <= duration '1 hour'` -> `t`        |
+| `duration > duration` -> `boolean`  | Greater than          | `duration '10 min' > duration '1 hour'` -> `f`         |
+| `duration >= duration` -> `boolean` | Greater than or equal | `duration '10 min' >= duration '1 hour'` -> `f`        |
+| `duration = duration` -> `boolean`  | Equal                 | `duration '10 min' = duration '1 hour'` -> `f`         |
+| `duration <> duration` -> `boolean` | Not equal             | `duration '10 min' <> duration '1 hour'` -> `t`        |
+
+### Functions
+
+| Function                                                                           | Description                                                                                | Example                                                                             |
+|------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------|
+| `make_duration([hours int [, mins int [, secs double precision ]]])` -> `duration` | Create duration from hours, minutes, and seconds fields, each of which can default to zero | `make_duration(12)` -> `12:00:00`                                                   |
+| `isfinite(duration)` -> `boolean`                                                  | Test for finite duration (not +/-infinity)                                                 | `isfinite(duration '1 hour')` -> `true`                                             |
+| `date_trunc(text, duration)` -> `duration`                                         | Truncate to specified precision; see [date_trunc][date_trunc]                              | `date_trunc('second', duration '3 hours 40 minutes 5 seconds 60 ms')` -> `03:40:05` |
+| `date_part(text, duration)` -> `double precision`                                  | Get duration subfield (equivalent to `extract_duration`); see [date_part][date_part]       | `date_part('minute', duration '1 hour 2 minutes 3 seconds')` -> `2`                 |
+| `extract_duration(text, duration)` -> `numeric`                                    | Get duration subfield; see [extract][date_part]                                            | `extract_duration('second', duration '1 hour 2 minutes 3 seconds')` -> `3.004`      |
 
 ### Supported Indexes
 
@@ -72,3 +82,6 @@ bytes. More importantly, `interval`s only tell us the time between two events, n
 example, how many hours is `Interval '2 months 15 days'`? To answer that you'd need to know if the months had 28, 29,
 30, or 31 days and if the days had 23, 24, or 25 hours. `duration`s on the other hand can always be compared to other
 `duration`s and return a meaningful answer.
+
+[date_trunc]: https://www.postgresql.org/docs/17/functions-datetime.html#FUNCTIONS-DATETIME-TRUNC
+[date_part]: https://www.postgresql.org/docs/17/functions-datetime.html#FUNCTIONS-DATETIME-EXTRACT

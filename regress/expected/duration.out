@@ -253,6 +253,182 @@ SELECT duration '4611686018427387903 us' / '-infinity'::float8;
  @ 0
 (1 row)
 
+-- Functions helper table
+CREATE TEMP TABLE valid_fields(f text);
+INSERT
+INTO
+	valid_fields
+VALUES
+	('hour'),
+	('minute'),
+	('second'),
+	('millisecond'),
+	('microsecond');
+CREATE TEMPORARY TABLE func_table (d duration);
+INSERT
+INTO
+	func_table
+VALUES
+	(duration '1 hour 2 minutes 3 seconds 4 milliseconds 5 microseconds'),
+	(-duration '1 hour 2 minutes 3 seconds 4 milliseconds 5 microseconds');
+-- make_duration
+SELECT make_duration();
+ make_duration 
+---------------
+ @ 0
+(1 row)
+
+SELECT make_duration(1);
+ make_duration 
+---------------
+ @ 1 hour
+(1 row)
+
+SELECT make_duration(1, 2);
+  make_duration  
+-----------------
+ @ 1 hour 2 mins
+(1 row)
+
+SELECT make_duration(1, 2, 3.456);
+       make_duration        
+----------------------------
+ @ 1 hour 2 mins 3.456 secs
+(1 row)
+
+SELECT make_duration(2147483647, 2147483647, 9223372036854775807);
+ERROR:  duration out of range
+-- isfinite
+SELECT isfinite(duration '112 hours');
+ isfinite 
+----------
+ t
+(1 row)
+
+SELECT isfinite(duration 'infinity');
+ isfinite 
+----------
+ f
+(1 row)
+
+SELECT isfinite(duration '-infinity');
+ isfinite 
+----------
+ f
+(1 row)
+
+-- date_trunc
+SELECT f, d, date_trunc(f, d) FROM valid_fields, func_table;
+      f      |                 d                 |            date_trunc             
+-------------+-----------------------------------+-----------------------------------
+ hour        | @ 1 hour 2 mins 3.004005 secs     | @ 1 hour
+ minute      | @ 1 hour 2 mins 3.004005 secs     | @ 1 hour 2 mins
+ second      | @ 1 hour 2 mins 3.004005 secs     | @ 1 hour 2 mins 3 secs
+ millisecond | @ 1 hour 2 mins 3.004005 secs     | @ 1 hour 2 mins 3.004 secs
+ microsecond | @ 1 hour 2 mins 3.004005 secs     | @ 1 hour 2 mins 3.004005 secs
+ hour        | @ 1 hour 2 mins 3.004005 secs ago | @ 1 hour ago
+ minute      | @ 1 hour 2 mins 3.004005 secs ago | @ 1 hour 2 mins ago
+ second      | @ 1 hour 2 mins 3.004005 secs ago | @ 1 hour 2 mins 3 secs ago
+ millisecond | @ 1 hour 2 mins 3.004005 secs ago | @ 1 hour 2 mins 3.004 secs ago
+ microsecond | @ 1 hour 2 mins 3.004005 secs ago | @ 1 hour 2 mins 3.004005 secs ago
+(10 rows)
+
+SELECT date_trunc('epoch', d) FROM func_table;
+ERROR:  unit "epoch" not recognized for type duration
+SELECT date_trunc('millennium', d) FROM func_table;
+ERROR:  unit "millennium" not supported for type duration
+SELECT date_trunc('century', d) FROM func_table;
+ERROR:  unit "century" not supported for type duration
+SELECT date_trunc('decade', d) FROM func_table;
+ERROR:  unit "decade" not supported for type duration
+SELECT date_trunc('year', d) FROM func_table;
+ERROR:  unit "year" not supported for type duration
+SELECT date_trunc('quarter', d) FROM func_table;
+ERROR:  unit "quarter" not supported for type duration
+SELECT date_trunc('month', d) FROM func_table;
+ERROR:  unit "month" not supported for type duration
+SELECT date_trunc('week', d) FROM func_table;
+ERROR:  unit "week" not supported for type duration
+SELECT date_trunc('day', d) FROM func_table;
+ERROR:  unit "day" not supported for type duration
+-- date_part
+SELECT f, d, date_part(f, d) FROM valid_fields, func_table;
+      f      |                 d                 | date_part 
+-------------+-----------------------------------+-----------
+ hour        | @ 1 hour 2 mins 3.004005 secs     |         1
+ minute      | @ 1 hour 2 mins 3.004005 secs     |         2
+ second      | @ 1 hour 2 mins 3.004005 secs     |  3.004005
+ millisecond | @ 1 hour 2 mins 3.004005 secs     |  3004.005
+ microsecond | @ 1 hour 2 mins 3.004005 secs     |   3004005
+ hour        | @ 1 hour 2 mins 3.004005 secs ago |        -1
+ minute      | @ 1 hour 2 mins 3.004005 secs ago |        -2
+ second      | @ 1 hour 2 mins 3.004005 secs ago | -3.004005
+ millisecond | @ 1 hour 2 mins 3.004005 secs ago | -3004.005
+ microsecond | @ 1 hour 2 mins 3.004005 secs ago |  -3004005
+(10 rows)
+
+SELECT date_part('epoch', d) FROM func_table;
+  date_part   
+--------------
+  3723.004005
+ -3723.004005
+(2 rows)
+
+SELECT date_part('millennium', d) FROM func_table;
+ERROR:  unit "millennium" not supported for type duration
+SELECT date_part('century', d) FROM func_table;
+ERROR:  unit "century" not supported for type duration
+SELECT date_part('decade', d) FROM func_table;
+ERROR:  unit "decade" not supported for type duration
+SELECT date_part('year', d) FROM func_table;
+ERROR:  unit "year" not supported for type duration
+SELECT date_part('quarter', d) FROM func_table;
+ERROR:  unit "quarter" not supported for type duration
+SELECT date_part('month', d) FROM func_table;
+ERROR:  unit "month" not supported for type duration
+SELECT date_part('week', d) FROM func_table;
+ERROR:  unit "week" not supported for type duration
+SELECT date_part('day', d) FROM func_table;
+ERROR:  unit "day" not supported for type duration
+-- extract_duration
+SELECT f, d, extract_duration(f, d) FROM valid_fields, func_table;
+      f      |                 d                 | extract_duration 
+-------------+-----------------------------------+------------------
+ hour        | @ 1 hour 2 mins 3.004005 secs     |                1
+ minute      | @ 1 hour 2 mins 3.004005 secs     |                2
+ second      | @ 1 hour 2 mins 3.004005 secs     |         3.004005
+ millisecond | @ 1 hour 2 mins 3.004005 secs     |         3004.005
+ microsecond | @ 1 hour 2 mins 3.004005 secs     |          3004005
+ hour        | @ 1 hour 2 mins 3.004005 secs ago |               -1
+ minute      | @ 1 hour 2 mins 3.004005 secs ago |               -2
+ second      | @ 1 hour 2 mins 3.004005 secs ago |        -3.004005
+ millisecond | @ 1 hour 2 mins 3.004005 secs ago |        -3004.005
+ microsecond | @ 1 hour 2 mins 3.004005 secs ago |         -3004005
+(10 rows)
+
+SELECT extract_duration('epoch', d) FROM func_table;
+ extract_duration 
+------------------
+      3723.004005
+     -3723.004005
+(2 rows)
+
+SELECT extract_duration('millennium', d) FROM func_table;
+ERROR:  unit "millennium" not supported for type duration
+SELECT extract_duration('century', d) FROM func_table;
+ERROR:  unit "century" not supported for type duration
+SELECT extract_duration('decade', d) FROM func_table;
+ERROR:  unit "decade" not supported for type duration
+SELECT extract_duration('year', d) FROM func_table;
+ERROR:  unit "year" not supported for type duration
+SELECT extract_duration('quarter', d) FROM func_table;
+ERROR:  unit "quarter" not supported for type duration
+SELECT extract_duration('month', d) FROM func_table;
+ERROR:  unit "month" not supported for type duration
+SELECT extract_duration('week', d) FROM func_table;
+ERROR:  unit "week" not supported for type duration
+SELECT extract_duration('day', d) FROM func_table;
+ERROR:  unit "day" not supported for type duration
 -- Infinity
 -- Create helper tables
 CREATE TEMP TABLE inf_table(d duration);
@@ -285,7 +461,9 @@ SELECT
 	t1.d = t2.d AS eq,
 	t1.d != t2.d AS ne
 FROM
-	inf_table AS t1, inf_table AS t2;
+	inf_table AS t1, inf_table AS t2
+WHERE
+	NOT isfinite(t1.d) OR NOT isfinite(t2.d);
         a        |        b        | lt | le | gt | ge | eq | ne 
 -----------------+-----------------+----+----+----+----+----+----
  infinity        | infinity        | f  | t  | f  | t  | t  | f
@@ -298,25 +476,19 @@ FROM
  -infinity       | @ 999 hours ago | t  | t  | f  | f  | f  | t
  @ 999 hours     | infinity        | t  | t  | f  | f  | f  | t
  @ 999 hours     | -infinity       | f  | f  | t  | t  | f  | t
- @ 999 hours     | @ 999 hours     | f  | t  | f  | t  | t  | f
- @ 999 hours     | @ 999 hours ago | f  | f  | t  | t  | f  | t
  @ 999 hours ago | infinity        | t  | t  | f  | f  | f  | t
  @ 999 hours ago | -infinity       | f  | f  | t  | t  | f  | t
- @ 999 hours ago | @ 999 hours     | t  | t  | f  | f  | f  | t
- @ 999 hours ago | @ 999 hours ago | f  | t  | f  | t  | t  | f
-(16 rows)
+(12 rows)
 
 -- Negation
-SELECT d, -d FROM inf_table;
-        d        |    ?column?     
------------------+-----------------
- infinity        | -infinity
- -infinity       | infinity
- @ 999 hours     | @ 999 hours ago
- @ 999 hours ago | @ 999 hours
-(4 rows)
+SELECT d, -d FROM inf_table WHERE NOT isfinite(d);
+     d     | ?column?  
+-----------+-----------
+ infinity  | -infinity
+ -infinity | infinity
+(2 rows)
 
--- Arithmetic
+-- Addition
 SELECT duration 'infinity' + duration '42 ms';
  ?column? 
 ----------
@@ -345,6 +517,7 @@ SELECT duration '-infinity' + duration '-infinity';
  -infinity
 (1 row)
 
+-- Subtraction
 SELECT duration 'infinity' - duration '42 ms';
  ?column? 
 ----------
@@ -373,6 +546,7 @@ SELECT duration '-infinity' - duration 'infinity';
 
 SELECT duration '-infinity' - duration '-infinity';
 ERROR:  duration out of range
+-- Multiplication
 SELECT duration 'infinity' * 15.6;
  ?column? 
 ----------
@@ -429,6 +603,7 @@ SELECT duration '-infinity' * 'nan'::float8;
 ERROR:  duration out of range
 SELECT duration '-infinity' * 0.0;
 ERROR:  duration out of range
+-- Division
 SELECT duration 'infinity' / 32.1;
  ?column? 
 ----------
@@ -469,6 +644,251 @@ SELECT duration '-infinity' / 'nan'::float8;
 ERROR:  duration out of range
 SELECT duration '-infinity' / 0.0;
 ERROR:  division by zero
+-- date_trunc
+SELECT f, d, date_trunc(f, d) FROM valid_fields, inf_table WHERE NOT isfinite(d);
+      f      |     d     | date_trunc 
+-------------+-----------+------------
+ hour        | infinity  | infinity
+ minute      | infinity  | infinity
+ second      | infinity  | infinity
+ millisecond | infinity  | infinity
+ microsecond | infinity  | infinity
+ hour        | -infinity | -infinity
+ minute      | -infinity | -infinity
+ second      | -infinity | -infinity
+ millisecond | -infinity | -infinity
+ microsecond | -infinity | -infinity
+(10 rows)
+
+SELECT date_trunc('epoch', duration 'infinity');
+ date_trunc 
+------------
+ infinity
+(1 row)
+
+SELECT date_trunc('millennium', duration 'infinity');
+ date_trunc 
+------------
+ infinity
+(1 row)
+
+SELECT date_trunc('century', duration 'infinity');
+ date_trunc 
+------------
+ infinity
+(1 row)
+
+SELECT date_trunc('decade', duration 'infinity');
+ date_trunc 
+------------
+ infinity
+(1 row)
+
+SELECT date_trunc('year', duration 'infinity');
+ date_trunc 
+------------
+ infinity
+(1 row)
+
+SELECT date_trunc('quarter', duration 'infinity');
+ date_trunc 
+------------
+ infinity
+(1 row)
+
+SELECT date_trunc('month', duration 'infinity');
+ date_trunc 
+------------
+ infinity
+(1 row)
+
+SELECT date_trunc('week', duration 'infinity');
+ date_trunc 
+------------
+ infinity
+(1 row)
+
+SELECT date_trunc('day', duration 'infinity');
+ date_trunc 
+------------
+ infinity
+(1 row)
+
+SELECT date_trunc('epoch', duration '-infinity');
+ date_trunc 
+------------
+ -infinity
+(1 row)
+
+SELECT date_trunc('millennium', duration '-infinity');
+ date_trunc 
+------------
+ -infinity
+(1 row)
+
+SELECT date_trunc('century', duration '-infinity');
+ date_trunc 
+------------
+ -infinity
+(1 row)
+
+SELECT date_trunc('decade', duration '-infinity');
+ date_trunc 
+------------
+ -infinity
+(1 row)
+
+SELECT date_trunc('year', duration '-infinity');
+ date_trunc 
+------------
+ -infinity
+(1 row)
+
+SELECT date_trunc('quarter', duration '-infinity');
+ date_trunc 
+------------
+ -infinity
+(1 row)
+
+SELECT date_trunc('month', duration '-infinity');
+ date_trunc 
+------------
+ -infinity
+(1 row)
+
+SELECT date_trunc('week', duration '-infinity');
+ date_trunc 
+------------
+ -infinity
+(1 row)
+
+SELECT date_trunc('day', duration '-infinity');
+ date_trunc 
+------------
+ -infinity
+(1 row)
+
+-- date_part
+SELECT f, d, date_part(f, d) FROM valid_fields, inf_table WHERE NOT isfinite(d);
+      f      |     d     | date_part 
+-------------+-----------+-----------
+ hour        | infinity  |  Infinity
+ minute      | infinity  |          
+ second      | infinity  |          
+ millisecond | infinity  |          
+ microsecond | infinity  |          
+ hour        | -infinity | -Infinity
+ minute      | -infinity |          
+ second      | -infinity |          
+ millisecond | -infinity |          
+ microsecond | -infinity |          
+(10 rows)
+
+SELECT date_part('epoch', duration 'infinity');
+ date_part 
+-----------
+  Infinity
+(1 row)
+
+SELECT date_part('millennium', duration 'infinity');
+ERROR:  unit "millennium" not supported for type duration
+SELECT date_part('century', duration 'infinity');
+ERROR:  unit "century" not supported for type duration
+SELECT date_part('decade', duration 'infinity');
+ERROR:  unit "decade" not supported for type duration
+SELECT date_part('year', duration 'infinity');
+ERROR:  unit "year" not supported for type duration
+SELECT date_part('quarter', duration 'infinity');
+ERROR:  unit "quarter" not supported for type duration
+SELECT date_part('month', duration 'infinity');
+ERROR:  unit "month" not supported for type duration
+SELECT date_part('week', duration 'infinity');
+ERROR:  unit "week" not supported for type duration
+SELECT date_part('day', duration 'infinity');
+ERROR:  unit "day" not supported for type duration
+SELECT date_part('epoch', duration '-infinity');
+ date_part 
+-----------
+ -Infinity
+(1 row)
+
+SELECT date_part('millennium', duration '-infinity');
+ERROR:  unit "millennium" not supported for type duration
+SELECT date_part('century', duration '-infinity');
+ERROR:  unit "century" not supported for type duration
+SELECT date_part('decade', duration '-infinity');
+ERROR:  unit "decade" not supported for type duration
+SELECT date_part('year', duration '-infinity');
+ERROR:  unit "year" not supported for type duration
+SELECT date_part('quarter', duration '-infinity');
+ERROR:  unit "quarter" not supported for type duration
+SELECT date_part('month', duration '-infinity');
+ERROR:  unit "month" not supported for type duration
+SELECT date_part('week', duration '-infinity');
+ERROR:  unit "week" not supported for type duration
+SELECT date_part('day', duration '-infinity');
+ERROR:  unit "day" not supported for type duration
+-- extract_duration
+SELECT f, d, extract_duration(f, d) FROM valid_fields, inf_table WHERE NOT isfinite(d);
+      f      |     d     | extract_duration 
+-------------+-----------+------------------
+ hour        | infinity  |         Infinity
+ minute      | infinity  |                 
+ second      | infinity  |                 
+ millisecond | infinity  |                 
+ microsecond | infinity  |                 
+ hour        | -infinity |        -Infinity
+ minute      | -infinity |                 
+ second      | -infinity |                 
+ millisecond | -infinity |                 
+ microsecond | -infinity |                 
+(10 rows)
+
+SELECT extract_duration('epoch', duration 'infinity');
+ extract_duration 
+------------------
+         Infinity
+(1 row)
+
+SELECT extract_duration('millennium', duration 'infinity');
+ERROR:  unit "millennium" not supported for type duration
+SELECT extract_duration('century', duration 'infinity');
+ERROR:  unit "century" not supported for type duration
+SELECT extract_duration('decade', duration 'infinity');
+ERROR:  unit "decade" not supported for type duration
+SELECT extract_duration('year', duration 'infinity');
+ERROR:  unit "year" not supported for type duration
+SELECT extract_duration('quarter', duration 'infinity');
+ERROR:  unit "quarter" not supported for type duration
+SELECT extract_duration('month', duration 'infinity');
+ERROR:  unit "month" not supported for type duration
+SELECT extract_duration('week', duration 'infinity');
+ERROR:  unit "week" not supported for type duration
+SELECT extract_duration('day', duration 'infinity');
+ERROR:  unit "day" not supported for type duration
+SELECT extract_duration('epoch', duration '-infinity');
+ extract_duration 
+------------------
+        -Infinity
+(1 row)
+
+SELECT extract_duration('millennium', duration '-infinity');
+ERROR:  unit "millennium" not supported for type duration
+SELECT extract_duration('century', duration '-infinity');
+ERROR:  unit "century" not supported for type duration
+SELECT extract_duration('decade', duration '-infinity');
+ERROR:  unit "decade" not supported for type duration
+SELECT extract_duration('year', duration '-infinity');
+ERROR:  unit "year" not supported for type duration
+SELECT extract_duration('quarter', duration '-infinity');
+ERROR:  unit "quarter" not supported for type duration
+SELECT extract_duration('month', duration '-infinity');
+ERROR:  unit "month" not supported for type duration
+SELECT extract_duration('week', duration '-infinity');
+ERROR:  unit "week" not supported for type duration
+SELECT extract_duration('day', duration '-infinity');
+ERROR:  unit "day" not supported for type duration
+-- Overflow
 -- This matches PostgreSQL semantics, but is probably incorrect.
 SELECT duration '9223372036854775807 us';
  duration 
