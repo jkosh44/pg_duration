@@ -1,37 +1,27 @@
 CREATE EXTENSION pg_duration;
 
 -- Valid duration input
-
-SELECT duration '42 hour';
-SELECT duration '43 hours';
-SELECT duration '44 h';
-SELECT duration '45 minute';
-SELECT duration '46 minutes';
-SELECT duration '47 m';
-SELECT duration '48 second';
-SELECT duration '49 seconds';
-SELECT duration '50 s';
-SELECT duration '51 millisecond';
-SELECT duration '52 milliseconds';
-SELECT duration '53 ms';
-SELECT duration '54 microsecond';
-SELECT duration '55 microseconds';
-SELECT duration '56 us';
-SELECT duration '-42 hour';
-SELECT duration '-43 hours';
-SELECT duration '-44 h';
-SELECT duration '-45 minute';
-SELECT duration '-46 minutes';
-SELECT duration '-47 m';
-SELECT duration '-48 second';
-SELECT duration '-49 seconds';
-SELECT duration '-50 s';
-SELECT duration '-51 millisecond';
-SELECT duration '-52 milliseconds';
-SELECT duration '-53 ms';
-SELECT duration '-54 microsecond';
-SELECT duration '-55 microseconds';
-SELECT duration '-56 us';
+CREATE TEMP TABLE input_table (s text);
+INSERT
+INTO
+	input_table
+VALUES
+	('42 hour'),
+	('43 hours'),
+	('44 h'),
+	('45 minute'),
+	('46 minutes'),
+	('47 m'),
+	('48 second'),
+	('49 seconds'),
+	('50 s'),
+	('51 millisecond'),
+	('52 milliseconds'),
+	('53 ms'),
+	('54 microsecond'),
+	('55 microseconds'),
+	('56 us');
+SELECT s, s::duration, ('-' || s)::duration FROM input_table;
 SELECT duration '1 minute 2 h 3 microseconds 4 second 5 ms';
 SELECT duration '36 minutes ago';
 
@@ -63,33 +53,34 @@ SELECT duration 'P1995-08-06T20:13:41';
 
 -- Comparison
 
-SELECT duration '1 sec' < duration '1 hour';
-SELECT duration '1 millisecond' < duration '1 ms';
-SELECT duration '1 minute' < duration '1 us';
-SELECT duration '1 sec' <= duration '1 hour';
-SELECT duration '1 millisecond' <= duration '1 ms';
-SELECT duration '1 minute' <= duration '1 us';
-SELECT duration '1 sec' > duration '1 hour';
-SELECT duration '1 millisecond' > duration '1 ms';
-SELECT duration '1 minute' > duration '1 us';
-SELECT duration '1 sec' >= duration '1 hour';
-SELECT duration '1 millisecond' >= duration '1 ms';
-SELECT duration '1 minute' >= duration '1 us';
-SELECT duration '1 sec' = duration '1 hour';
-SELECT duration '1 millisecond' = duration '1 ms';
-SELECT duration '1 minute' = duration '1 us';
-SELECT duration '1 sec' <> duration '1 hour';
-SELECT duration '1 millisecond' <> duration '1 ms';
-SELECT duration '1 minute' <> duration '1 us';
+CREATE TEMP TABLE cmp_table(a duration, b duration);
+
+INSERT
+INTO
+	cmp_table
+VALUES
+	('1 sec', '1 hour'), ('1 millisecon', '1 ms'), ('1 minute', '1 us');
+SELECT
+	a,
+	b,
+	a < b AS lt,
+	a <= b AS le,
+	a > b AS gt,
+	a >= b AS ge,
+	a = b AS eq,
+	a != b AS ne
+FROM
+	cmp_table;
 
 -- Arithmetic
+-- Valid
 SELECT - duration '10 minutes';
 SELECT duration '55 seconds' + duration '12 hours';
 SELECT duration '2 hours' - duration '30 minutes';
 SELECT duration '42 minutes' * 10.5;
 SELECT duration '42 minutes' * 0.0;
 SELECT duration '5 hours 40 minutes 30 s' / 3.7;
-
+-- Invalid
 SELECT - duration '-9223372036854775807 us';
 SELECT duration '9223372036854775806 us' + duration '1 us';
 SELECT duration '9223372036854775806 us' + duration '2 us';
@@ -108,54 +99,32 @@ SELECT duration '4611686018427387903 us' / 'infinity'::float8;
 SELECT duration '4611686018427387903 us' / '-infinity'::float8;
 
 -- Infinity
+
+-- Create helper tables
+CREATE TEMP TABLE inf_table(d duration);
+INSERT
+INTO
+	inf_table
+VALUES
+	('infinity'), ('-infinity'), ('999 hours'), ('-999 hours');
+-- Input
 SELECT duration 'infinity';
 SELECT duration '-infinity';
-
-SELECT duration 'infinity' > duration '999 hours';
-SELECT duration 'infinity' >= duration '999 hours';
-SELECT duration 'infinity' < duration '999 hours';
-SELECT duration 'infinity' <= duration '999 hours';
-SELECT duration 'infinity' = duration '999 hours';
-SELECT duration 'infinity' <> duration '999 hours';
-
-SELECT duration '-infinity' > duration '999 hours';
-SELECT duration '-infinity' >= duration '999 hours';
-SELECT duration '-infinity' < duration '999 hours';
-SELECT duration '-infinity' <= duration '999 hours';
-SELECT duration '-infinity' = duration '999 hours';
-SELECT duration '-infinity' <> duration '999 hours';
-
-SELECT duration 'infinity' > duration 'infinity';
-SELECT duration 'infinity' >= duration 'infinity';
-SELECT duration 'infinity' < duration 'infinity';
-SELECT duration 'infinity' <= duration 'infinity';
-SELECT duration 'infinity' = duration 'infinity';
-SELECT duration 'infinity' <> duration 'infinity';
-
-SELECT duration 'infinity' > duration '-infinity';
-SELECT duration 'infinity' >= duration '-infinity';
-SELECT duration 'infinity' < duration '-infinity';
-SELECT duration 'infinity' <= duration '-infinity';
-SELECT duration 'infinity' = duration '-infinity';
-SELECT duration 'infinity' <> duration '-infinity';
-
-SELECT duration '-infinity' > duration 'infinity';
-SELECT duration '-infinity' >= duration 'infinity';
-SELECT duration '-infinity' < duration 'infinity';
-SELECT duration '-infinity' <= duration 'infinity';
-SELECT duration '-infinity' = duration 'infinity';
-SELECT duration '-infinity' <> duration 'infinity';
-
-SELECT duration '-infinity' > duration '-infinity';
-SELECT duration '-infinity' >= duration '-infinity';
-SELECT duration '-infinity' < duration '-infinity';
-SELECT duration '-infinity' <= duration '-infinity';
-SELECT duration '-infinity' = duration '-infinity';
-SELECT duration '-infinity' <> duration '-infinity';
-
-SELECT - duration 'infinity';
-SELECT - duration '-infinity';
-
+-- Comparison
+SELECT
+	t1.d AS a,
+	t2.d AS b,
+	t1.d < t2.d AS lt,
+	t1.d <= t2.d AS le,
+	t1.d > t2.d AS gt,
+	t1.d >= t2.d AS ge,
+	t1.d = t2.d AS eq,
+	t1.d != t2.d AS ne
+FROM
+	inf_table AS t1, inf_table AS t2;
+-- Negation
+SELECT d, -d FROM inf_table;
+-- Arithmetic
 SELECT duration 'infinity' + duration '42 ms';
 SELECT duration '-infinity' + duration '42 ms';
 SELECT duration 'infinity' + duration 'infinity';

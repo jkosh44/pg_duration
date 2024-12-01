@@ -1,184 +1,44 @@
 CREATE EXTENSION pg_duration;
 -- Valid duration input
-SELECT duration '42 hour';
-  duration  
-------------
- @ 42 hours
-(1 row)
-
-SELECT duration '43 hours';
-  duration  
-------------
- @ 43 hours
-(1 row)
-
-SELECT duration '44 h';
-  duration  
-------------
- @ 44 hours
-(1 row)
-
-SELECT duration '45 minute';
- duration  
------------
- @ 45 mins
-(1 row)
-
-SELECT duration '46 minutes';
- duration  
------------
- @ 46 mins
-(1 row)
-
-SELECT duration '47 m';
- duration  
------------
- @ 47 mins
-(1 row)
-
-SELECT duration '48 second';
- duration  
------------
- @ 48 secs
-(1 row)
-
-SELECT duration '49 seconds';
- duration  
------------
- @ 49 secs
-(1 row)
-
-SELECT duration '50 s';
- duration  
------------
- @ 50 secs
-(1 row)
-
-SELECT duration '51 millisecond';
-   duration   
---------------
- @ 0.051 secs
-(1 row)
-
-SELECT duration '52 milliseconds';
-   duration   
---------------
- @ 0.052 secs
-(1 row)
-
-SELECT duration '53 ms';
-   duration   
---------------
- @ 0.053 secs
-(1 row)
-
-SELECT duration '54 microsecond';
-    duration     
------------------
- @ 0.000054 secs
-(1 row)
-
-SELECT duration '55 microseconds';
-    duration     
------------------
- @ 0.000055 secs
-(1 row)
-
-SELECT duration '56 us';
-    duration     
------------------
- @ 0.000056 secs
-(1 row)
-
-SELECT duration '-42 hour';
-    duration    
-----------------
- @ 42 hours ago
-(1 row)
-
-SELECT duration '-43 hours';
-    duration    
-----------------
- @ 43 hours ago
-(1 row)
-
-SELECT duration '-44 h';
-    duration    
-----------------
- @ 44 hours ago
-(1 row)
-
-SELECT duration '-45 minute';
-   duration    
----------------
- @ 45 mins ago
-(1 row)
-
-SELECT duration '-46 minutes';
-   duration    
----------------
- @ 46 mins ago
-(1 row)
-
-SELECT duration '-47 m';
-   duration    
----------------
- @ 47 mins ago
-(1 row)
-
-SELECT duration '-48 second';
-   duration    
----------------
- @ 48 secs ago
-(1 row)
-
-SELECT duration '-49 seconds';
-   duration    
----------------
- @ 49 secs ago
-(1 row)
-
-SELECT duration '-50 s';
-   duration    
----------------
- @ 50 secs ago
-(1 row)
-
-SELECT duration '-51 millisecond';
-     duration     
-------------------
- @ 0.051 secs ago
-(1 row)
-
-SELECT duration '-52 milliseconds';
-     duration     
-------------------
- @ 0.052 secs ago
-(1 row)
-
-SELECT duration '-53 ms';
-     duration     
-------------------
- @ 0.053 secs ago
-(1 row)
-
-SELECT duration '-54 microsecond';
-      duration       
----------------------
- @ 0.000054 secs ago
-(1 row)
-
-SELECT duration '-55 microseconds';
-      duration       
----------------------
- @ 0.000055 secs ago
-(1 row)
-
-SELECT duration '-56 us';
-      duration       
----------------------
- @ 0.000056 secs ago
-(1 row)
+CREATE TEMP TABLE input_table (s text);
+INSERT
+INTO
+	input_table
+VALUES
+	('42 hour'),
+	('43 hours'),
+	('44 h'),
+	('45 minute'),
+	('46 minutes'),
+	('47 m'),
+	('48 second'),
+	('49 seconds'),
+	('50 s'),
+	('51 millisecond'),
+	('52 milliseconds'),
+	('53 ms'),
+	('54 microsecond'),
+	('55 microseconds'),
+	('56 us');
+SELECT s, s::duration, ('-' || s)::duration FROM input_table;
+        s        |        s        |      duration       
+-----------------+-----------------+---------------------
+ 42 hour         | @ 42 hours      | @ 42 hours ago
+ 43 hours        | @ 43 hours      | @ 43 hours ago
+ 44 h            | @ 44 hours      | @ 44 hours ago
+ 45 minute       | @ 45 mins       | @ 45 mins ago
+ 46 minutes      | @ 46 mins       | @ 46 mins ago
+ 47 m            | @ 47 mins       | @ 47 mins ago
+ 48 second       | @ 48 secs       | @ 48 secs ago
+ 49 seconds      | @ 49 secs       | @ 49 secs ago
+ 50 s            | @ 50 secs       | @ 50 secs ago
+ 51 millisecond  | @ 0.051 secs    | @ 0.051 secs ago
+ 52 milliseconds | @ 0.052 secs    | @ 0.052 secs ago
+ 53 ms           | @ 0.053 secs    | @ 0.053 secs ago
+ 54 microsecond  | @ 0.000054 secs | @ 0.000054 secs ago
+ 55 microseconds | @ 0.000055 secs | @ 0.000055 secs ago
+ 56 us           | @ 0.000056 secs | @ 0.000056 secs ago
+(15 rows)
 
 SELECT duration '1 minute 2 h 3 microseconds 4 second 5 ms';
            duration            
@@ -282,115 +142,32 @@ ERROR:  invalid units for duration
 LINE 1: SELECT duration 'P1995-08-06T20:13:41';
                         ^
 -- Comparison
-SELECT duration '1 sec' < duration '1 hour';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT duration '1 millisecond' < duration '1 ms';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT duration '1 minute' < duration '1 us';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT duration '1 sec' <= duration '1 hour';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT duration '1 millisecond' <= duration '1 ms';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT duration '1 minute' <= duration '1 us';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT duration '1 sec' > duration '1 hour';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT duration '1 millisecond' > duration '1 ms';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT duration '1 minute' > duration '1 us';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT duration '1 sec' >= duration '1 hour';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT duration '1 millisecond' >= duration '1 ms';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT duration '1 minute' >= duration '1 us';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT duration '1 sec' = duration '1 hour';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT duration '1 millisecond' = duration '1 ms';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT duration '1 minute' = duration '1 us';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT duration '1 sec' <> duration '1 hour';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT duration '1 millisecond' <> duration '1 ms';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT duration '1 minute' <> duration '1 us';
- ?column? 
-----------
- t
-(1 row)
+CREATE TEMP TABLE cmp_table(a duration, b duration);
+INSERT
+INTO
+	cmp_table
+VALUES
+	('1 sec', '1 hour'), ('1 millisecon', '1 ms'), ('1 minute', '1 us');
+SELECT
+	a,
+	b,
+	a < b AS lt,
+	a <= b AS le,
+	a > b AS gt,
+	a >= b AS ge,
+	a = b AS eq,
+	a != b AS ne
+FROM
+	cmp_table;
+      a       |        b        | lt | le | gt | ge | eq | ne 
+--------------+-----------------+----+----+----+----+----+----
+ @ 1 sec      | @ 1 hour        | t  | t  | f  | f  | f  | t
+ @ 0.001 secs | @ 0.001 secs    | f  | t  | f  | t  | t  | f
+ @ 1 min      | @ 0.000001 secs | f  | f  | t  | t  | f  | t
+(3 rows)
 
 -- Arithmetic
+-- Valid
 SELECT - duration '10 minutes';
    ?column?    
 ---------------
@@ -427,6 +204,7 @@ SELECT duration '5 hours 40 minutes 30 s' / 3.7;
  @ 1 hour 32 mins 1.621622 secs
 (1 row)
 
+-- Invalid
 SELECT - duration '-9223372036854775807 us';
 ERROR:  duration out of range
 SELECT duration '9223372036854775806 us' + duration '1 us';
@@ -476,6 +254,14 @@ SELECT duration '4611686018427387903 us' / '-infinity'::float8;
 (1 row)
 
 -- Infinity
+-- Create helper tables
+CREATE TEMP TABLE inf_table(d duration);
+INSERT
+INTO
+	inf_table
+VALUES
+	('infinity'), ('-infinity'), ('999 hours'), ('-999 hours');
+-- Input
 SELECT duration 'infinity';
  duration 
 ----------
@@ -488,234 +274,49 @@ SELECT duration '-infinity';
  -infinity
 (1 row)
 
-SELECT duration 'infinity' > duration '999 hours';
- ?column? 
-----------
- t
-(1 row)
+-- Comparison
+SELECT
+	t1.d AS a,
+	t2.d AS b,
+	t1.d < t2.d AS lt,
+	t1.d <= t2.d AS le,
+	t1.d > t2.d AS gt,
+	t1.d >= t2.d AS ge,
+	t1.d = t2.d AS eq,
+	t1.d != t2.d AS ne
+FROM
+	inf_table AS t1, inf_table AS t2;
+        a        |        b        | lt | le | gt | ge | eq | ne 
+-----------------+-----------------+----+----+----+----+----+----
+ infinity        | infinity        | f  | t  | f  | t  | t  | f
+ infinity        | -infinity       | f  | f  | t  | t  | f  | t
+ infinity        | @ 999 hours     | f  | f  | t  | t  | f  | t
+ infinity        | @ 999 hours ago | f  | f  | t  | t  | f  | t
+ -infinity       | infinity        | t  | t  | f  | f  | f  | t
+ -infinity       | -infinity       | f  | t  | f  | t  | t  | f
+ -infinity       | @ 999 hours     | t  | t  | f  | f  | f  | t
+ -infinity       | @ 999 hours ago | t  | t  | f  | f  | f  | t
+ @ 999 hours     | infinity        | t  | t  | f  | f  | f  | t
+ @ 999 hours     | -infinity       | f  | f  | t  | t  | f  | t
+ @ 999 hours     | @ 999 hours     | f  | t  | f  | t  | t  | f
+ @ 999 hours     | @ 999 hours ago | f  | f  | t  | t  | f  | t
+ @ 999 hours ago | infinity        | t  | t  | f  | f  | f  | t
+ @ 999 hours ago | -infinity       | f  | f  | t  | t  | f  | t
+ @ 999 hours ago | @ 999 hours     | t  | t  | f  | f  | f  | t
+ @ 999 hours ago | @ 999 hours ago | f  | t  | f  | t  | t  | f
+(16 rows)
 
-SELECT duration 'infinity' >= duration '999 hours';
- ?column? 
-----------
- t
-(1 row)
+-- Negation
+SELECT d, -d FROM inf_table;
+        d        |    ?column?     
+-----------------+-----------------
+ infinity        | -infinity
+ -infinity       | infinity
+ @ 999 hours     | @ 999 hours ago
+ @ 999 hours ago | @ 999 hours
+(4 rows)
 
-SELECT duration 'infinity' < duration '999 hours';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT duration 'infinity' <= duration '999 hours';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT duration 'infinity' = duration '999 hours';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT duration 'infinity' <> duration '999 hours';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT duration '-infinity' > duration '999 hours';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT duration '-infinity' >= duration '999 hours';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT duration '-infinity' < duration '999 hours';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT duration '-infinity' <= duration '999 hours';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT duration '-infinity' = duration '999 hours';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT duration '-infinity' <> duration '999 hours';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT duration 'infinity' > duration 'infinity';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT duration 'infinity' >= duration 'infinity';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT duration 'infinity' < duration 'infinity';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT duration 'infinity' <= duration 'infinity';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT duration 'infinity' = duration 'infinity';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT duration 'infinity' <> duration 'infinity';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT duration 'infinity' > duration '-infinity';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT duration 'infinity' >= duration '-infinity';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT duration 'infinity' < duration '-infinity';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT duration 'infinity' <= duration '-infinity';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT duration 'infinity' = duration '-infinity';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT duration 'infinity' <> duration '-infinity';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT duration '-infinity' > duration 'infinity';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT duration '-infinity' >= duration 'infinity';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT duration '-infinity' < duration 'infinity';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT duration '-infinity' <= duration 'infinity';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT duration '-infinity' = duration 'infinity';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT duration '-infinity' <> duration 'infinity';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT duration '-infinity' > duration '-infinity';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT duration '-infinity' >= duration '-infinity';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT duration '-infinity' < duration '-infinity';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT duration '-infinity' <= duration '-infinity';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT duration '-infinity' = duration '-infinity';
- ?column? 
-----------
- t
-(1 row)
-
-SELECT duration '-infinity' <> duration '-infinity';
- ?column? 
-----------
- f
-(1 row)
-
-SELECT - duration 'infinity';
- ?column?  
------------
- -infinity
-(1 row)
-
-SELECT - duration '-infinity';
- ?column? 
-----------
- infinity
-(1 row)
-
+-- Arithmetic
 SELECT duration 'infinity' + duration '42 ms';
  ?column? 
 ----------
