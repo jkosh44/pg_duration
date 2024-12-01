@@ -1,5 +1,5 @@
 # pg_duration extension
 comment = 'data type for representing durations'
-default_version = '1.0'
+default_version = '1.0.0'
 module_pathname = '$libdir/pg_duration'
 relocatable = true

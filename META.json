@@ -1,0 +1,35 @@
+{
+    "name": "pg_duration",
+    "abstract": "A duration data type",
+    "version": "1.0.0",
+    "maintainer": "Joseph Koshakow <koshy44@gmail.com.com>",
+    "license": "postgresql",
+    "provides": {
+       "pg_duration": {
+          "abstract": "A duration data type",
+          "file": "sql/pg_duration--1.0.sql",
+          "docfile": "doc/pg_duration.md",
+          "version": "1.0.0"
+       }
+    },
+    "resources": {
+      "bugtracker": {
+         "web": "https://github.com/jkosh44/pg_duration/issues/"
+      },
+      "repository": {
+      "url":  "git://github.com/jkosh44/pg_duration.git",
+      "web":  "https://github.com/jkosh44/pg_duration/",
+      "type": "git"
+      }
+    },
+    "generated_by": "Joseph Koshakow",
+    "meta-spec": {
+       "version": "1.0.0",
+       "url": "https://pgxn.org/meta/spec.txt"
+    },
+    "tags": [
+      "duration",
+      "interval",
+      "data type"
+   ]
+ }
