@@ -49,6 +49,8 @@ units larger than hours.
 | `duration + duration` -> `duration` | Add durations         | `duration '5 sec' + duration '10 min'` -> `00:10:05`   |
 | `duration - duration` -> `duration` | Subtract durations    | `duration '6 hours' - duration '15 min'` -> `05:45:00` |
 | `- duration` -> `duration`          | Negate a duration     | `- duration '450 milliseconds'` -> `-00:00:00.45`      |
+| `duration * float8` -> `duration`   | Multiply a duration   | `duration '3 hours' * 2.5` -> `07:30:00`               |
+| `duration / float8` -> `duration`   | Divide a duration     | `duration '3 hours' / 2.5` -> `01:12:00`               |
 | `duration < duration` -> `bool`     | Less than             | `duration '10 min' < duration '1 hour'` -> `t`         |
 | `duration <= duration` -> `bool`    | Less than or equal    | `duration '10 min' <= duration '1 hour'` -> `t`        |
 | `duration > duration` -> `bool`     | Greater than          | `duration '10 min' > duration '1 hour'` -> `f`         |

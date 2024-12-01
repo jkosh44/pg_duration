@@ -119,6 +119,21 @@ LANGUAGE C STRICT IMMUTABLE;
 COMMENT ON FUNCTION duration_mi(duration, duration) IS
 'minus';
 
+CREATE FUNCTION duration_mul(duration, float8)
+RETURNS duration
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+COMMENT ON FUNCTION duration_mul(duration, float8) IS
+'multiplication';
+
+CREATE FUNCTION duration_div(duration, float8)
+RETURNS duration
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+COMMENT ON FUNCTION duration_div(duration, float8) IS
+'division';
 
 -- Define duration type
 
@@ -216,6 +231,19 @@ CREATE OPERATOR - (
 	RIGHTARG = duration,
 	PROCEDURE = duration_mi,
 	COMMUTATOR = '-'
+);
+
+CREATE OPERATOR * (
+	LEFTARG = duration,
+	RIGHTARG = float8,
+	PROCEDURE = duration_mul,
+	COMMUTATOR = '*'
+);
+
+CREATE OPERATOR / (
+	LEFTARG = duration,
+	RIGHTARG = float8,
+	PROCEDURE = duration_div
 );
 
 -- Create the operator classes for indexing
