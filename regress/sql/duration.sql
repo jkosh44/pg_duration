@@ -183,6 +183,19 @@ SELECT (interval '1 month')::duration;
 SELECT (interval '1 day')::duration;
 SELECT (interval '1 month 2 days 3 hours')::duration;
 
+--- Aggregates
+
+SELECT
+	avg(s::duration),
+	count(s::duration),
+	max(s::duration),
+	min(s::duration),
+	sum(s::duration)
+FROM
+	(
+		SELECT s FROM input_table UNION ALL SELECT '-' || s FROM input_table
+		UNION ALL SELECT NULL
+	);
 
 -- Infinity
 
@@ -319,6 +332,22 @@ FROM
 	inf_table
 WHERE
 	NOT isfinite(d);
+-- Aggregates
+SELECT
+	avg(d), max(d), min(d), sum(d)
+FROM
+	inf_table
+WHERE
+	d != duration 'infinity';
+SELECT
+	avg(d), max(d), min(d), sum(d)
+FROM
+	inf_table
+WHERE
+	d != duration '-infinity';
+SELECT max(d), min(d) FROM inf_table;
+SELECT avg(d) FROM inf_table;
+SELECT sum(d) FROM inf_table;
 -- Overflow
 -- This matches PostgreSQL semantics, but is probably incorrect.
 SELECT duration '9223372036854775807 us';

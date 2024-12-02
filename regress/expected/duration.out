@@ -474,6 +474,23 @@ SELECT (interval '1 day')::duration;
 ERROR:  invalid units for duration
 SELECT (interval '1 month 2 days 3 hours')::duration;
 ERROR:  invalid units for duration
+--- Aggregates
+SELECT
+	avg(s::duration),
+	count(s::duration),
+	max(s::duration),
+	min(s::duration),
+	sum(s::duration)
+FROM
+	(
+		SELECT s FROM input_table UNION ALL SELECT '-' || s FROM input_table
+		UNION ALL SELECT NULL
+	);
+           avg           | count |    max     |      min       |           sum           
+-------------------------+-------+------------+----------------+-------------------------
+ @ 7 mins 30.250313 secs |    32 | @ 44 hours | @ 44 hours ago | @ 4 hours 8.010006 secs
+(1 row)
+
 -- Infinity
 -- Create helper tables
 CREATE TEMP TABLE inf_table(d duration);
@@ -946,6 +963,39 @@ WHERE
  -infinity | -infinity | -infinity
 (2 rows)
 
+-- Aggregates
+SELECT
+	avg(d), max(d), min(d), sum(d)
+FROM
+	inf_table
+WHERE
+	d != duration 'infinity';
+    avg    |     max     |    min    |    sum    
+-----------+-------------+-----------+-----------
+ -infinity | @ 999 hours | -infinity | -infinity
+(1 row)
+
+SELECT
+	avg(d), max(d), min(d), sum(d)
+FROM
+	inf_table
+WHERE
+	d != duration '-infinity';
+   avg    |   max    |       min       |   sum    
+----------+----------+-----------------+----------
+ infinity | infinity | @ 999 hours ago | infinity
+(1 row)
+
+SELECT max(d), min(d) FROM inf_table;
+   max    |    min    
+----------+-----------
+ infinity | -infinity
+(1 row)
+
+SELECT avg(d) FROM inf_table;
+ERROR:  duration out of range
+SELECT sum(d) FROM inf_table;
+ERROR:  duration out of range
 -- Overflow
 -- This matches PostgreSQL semantics, but is probably incorrect.
 SELECT duration '9223372036854775807 us';

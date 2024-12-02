@@ -68,6 +68,23 @@ units larger than hours.
 | `date_part(text, duration)` -> `double precision`                                  | Get duration subfield (equivalent to `extract_duration`); see [date_part][date_part]       | `date_part('minute', duration '1 hour 2 minutes 3 seconds')` -> `2`                 |
 | `extract_duration(text, duration)` -> `numeric`                                    | Get duration subfield; see [extract][date_part]                                            | `extract_duration('second', duration '1 hour 2 minutes 3 seconds')` -> `3.004`      |
 
+### Casts
+
+| Source Type | Target Type | Cast Type |
+|-------------|-------------|-----------|
+| `duration`  | `interval`  | implicit  |
+| `interval`  | `duration`  | explicit  |
+
+### Aggregates
+
+| Aggregate | Return Type | Description                                                |
+|-----------|-------------|------------------------------------------------------------|
+| `avg`     | `duration`  | The average (arithmetic mean) of all non-null input values |
+| `count`   | `bigint`    | Number of input rows for which the value is not null       |
+| `max`     | `duration`  | Maximum value across all non-null input values             |
+| `min`     | `duration`  | Minimum value across all non-null input values             |
+| `sum`     | `duration`  | Sum across all non-null input values                       |
+
 ### Supported Indexes
 
 The `duration` type supports the following indexes

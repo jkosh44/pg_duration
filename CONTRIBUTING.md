@@ -20,6 +20,10 @@ functions. This causes some weird behavior like including the word `interval` in
 accepting some input/output formats that don't make sense for `duration`s. If we're not wrapping `interval` functions, we
 should model our implementations after the existing `interval` implementations.
 
+We could have been more aggressive in converting durations to intervals, calling the interval function, and converting
+back to durations instead of re-implementing functionality. However, we would have to allocate an extra 128 bits for
+each duration which would add necessary overhead.
+
 ## Debugging
 
 When debugging the extension I have found it much easier to install the extension into a PostgreSQL server built from
