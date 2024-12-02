@@ -71,6 +71,35 @@ PG_FUNCTION_INFO_V1(extract_duration);
 PG_FUNCTION_INFO_V1(duration_interval);
 PG_FUNCTION_INFO_V1(interval_duration);
 
+/*
+** Aggregates
+*/
+PG_FUNCTION_INFO_V1(duration_avg_accum);
+PG_FUNCTION_INFO_V1(duration_avg_combine);
+PG_FUNCTION_INFO_V1(duration_avg_serialize);
+PG_FUNCTION_INFO_V1(duration_avg_deserialize);
+PG_FUNCTION_INFO_V1(duration_avg_accum_inv);
+PG_FUNCTION_INFO_V1(duration_avg);
+PG_FUNCTION_INFO_V1(duration_sum);
+PG_FUNCTION_INFO_V1(duration_smaller);
+PG_FUNCTION_INFO_V1(duration_larger);
+
+/*
+ * The transition datatype for duration aggregates is declared as internal.
+ * It's a pointer to an DurationAggState allocated in the aggregate context.
+ */
+typedef struct DurationAggState
+{
+	int64		N;				/* count of finite durations processed */
+	Duration	sumX;			/* sum of finite durations processed */
+	/* These counts are *not* included in N!  Use DA_TOTAL_COUNT() as needed */
+	int64		pInfcount;		/* count of +infinity durations */
+	int64		nInfcount;		/* count of -infinity durations */
+} DurationAggState;
+
+#define DA_TOTAL_COUNT(da) \
+	((da)->N + (da)->pInfcount + (da)->nInfcount)
+
 static void EncodeSpecialDuration(const Duration duration, char *str);
 static Duration duration_um_internal(const Duration duration);
 
@@ -645,7 +674,7 @@ make_duration(PG_FUNCTION_ARGS)
 
 	/*
 	 * Reject out-of-range inputs.  We reject any input values that cause
-	 * integer overflow of the corresponding interval fields.
+	 * integer overflow of the corresponding duration fields.
 	 */
 	if (isinf(secs) || isnan(secs))
 		goto out_of_range;
@@ -989,6 +1018,352 @@ interval_duration(PG_FUNCTION_ARGS)
 	{
 		result = interval->time;
 	}
+
+	PG_RETURN_DURATION(result);
+}
+
+/*****************************************************************************
+ *				   Aggregates
+ *****************************************************************************/
+
+/*
+ * Prepare state data for a duration aggregate function, that needs to compute
+ * sum and count, in the aggregate's memory context.
+ *
+ * The function is used when the state data needs to be allocated in aggregate's
+ * context. When the state data needs to be allocated in the current memory
+ * context, we use palloc0 directly e.g. duration_avg_deserialize().
+ */
+static DurationAggState *
+makeDurationAggState(FunctionCallInfo fcinfo)
+{
+	DurationAggState *state;
+	MemoryContext agg_context;
+	MemoryContext old_context;
+
+	if (!AggCheckCallContext(fcinfo, &agg_context))
+		elog(ERROR, "aggregate function called in non-aggregate context");
+
+	old_context = MemoryContextSwitchTo(agg_context);
+
+	state = (DurationAggState *) palloc0(sizeof(DurationAggState));
+
+	MemoryContextSwitchTo(old_context);
+
+	return state;
+}
+
+/*
+ * Accumulate a new input value for duration aggregate functions.
+ */
+static void
+do_duration_accum(DurationAggState *state, Duration newval)
+{
+	/* Infinite inputs are counted separately, and do not affect "N" */
+	if (DURATION_IS_NOBEGIN(newval))
+	{
+		state->nInfcount++;
+		return;
+	}
+
+	if (DURATION_IS_NOEND(newval))
+	{
+		state->pInfcount++;
+		return;
+	}
+
+	state->sumX = finite_duration_pl(state->sumX, newval);
+	state->N++;
+}
+
+/*
+ * Remove the given duration value from the aggregated state.
+ */
+static void
+do_duration_discard(DurationAggState *state, Duration newval)
+{
+	/* Infinite inputs are counted separately, and do not affect "N" */
+	if (DURATION_IS_NOBEGIN(newval))
+	{
+		state->nInfcount--;
+		return;
+	}
+
+	if (DURATION_IS_NOEND(newval))
+	{
+		state->pInfcount--;
+		return;
+	}
+
+	/* Handle the to-be-discarded finite value. */
+	state->N--;
+	if (state->N > 0)
+		state->sumX = finite_duration_mi(state->sumX, newval);
+	else
+	{
+		/* All values discarded, reset the state */
+		Assert(state->N == 0);
+		memset(&state->sumX, 0, sizeof(state->sumX));
+	}
+}
+
+/*
+ * Transition function for sum() and avg() duration aggregates.
+ */
+Datum
+duration_avg_accum(PG_FUNCTION_ARGS)
+{
+	DurationAggState *state;
+
+	state = PG_ARGISNULL(0) ? NULL : (DurationAggState *) PG_GETARG_POINTER(0);
+
+	/* Create the state data on the first call */
+	if (state == NULL)
+		state = makeDurationAggState(fcinfo);
+
+	if (!PG_ARGISNULL(1))
+		do_duration_accum(state, PG_GETARG_DURATION(1));
+
+	PG_RETURN_POINTER(state);
+}
+
+/*
+ * Combine function for sum() and avg() duration aggregates.
+ *
+ * Combine the given internal aggregate states and place the combination in
+ * the first argument.
+ */
+Datum
+duration_avg_combine(PG_FUNCTION_ARGS)
+{
+	DurationAggState *state1;
+	DurationAggState *state2;
+
+	state1 = PG_ARGISNULL(0) ? NULL : (DurationAggState *) PG_GETARG_POINTER(0);
+	state2 = PG_ARGISNULL(1) ? NULL : (DurationAggState *) PG_GETARG_POINTER(1);
+
+	if (state2 == NULL)
+		PG_RETURN_POINTER(state1);
+
+	if (state1 == NULL)
+	{
+		/* manually copy all fields from state2 to state1 */
+		state1 = makeDurationAggState(fcinfo);
+
+		state1->N = state2->N;
+		state1->pInfcount = state2->pInfcount;
+		state1->nInfcount = state2->nInfcount;
+
+		state1->sumX = state2->sumX;
+
+		PG_RETURN_POINTER(state1);
+	}
+
+	state1->N += state2->N;
+	state1->pInfcount += state2->pInfcount;
+	state1->nInfcount += state2->nInfcount;
+
+	/* Accumulate finite duration values, if any. */
+	if (state2->N > 0)
+		state1->sumX = finite_duration_pl(state1->sumX, state2->sumX);
+
+	PG_RETURN_POINTER(state1);
+}
+
+/*
+ * duration_avg_serialize
+ *		Serialize DurationAggState for duration aggregates.
+ */
+Datum
+duration_avg_serialize(PG_FUNCTION_ARGS)
+{
+	DurationAggState *state;
+	StringInfoData buf;
+	bytea	   *result;
+
+	/* Ensure we disallow calling when not in aggregate context */
+	if (!AggCheckCallContext(fcinfo, NULL))
+		elog(ERROR, "aggregate function called in non-aggregate context");
+
+	state = (DurationAggState *) PG_GETARG_POINTER(0);
+
+	pq_begintypsend(&buf);
+
+	/* N */
+	pq_sendint64(&buf, state->N);
+
+	/* sumX */
+	pq_sendint64(&buf, state->sumX);
+
+	/* pInfcount */
+	pq_sendint64(&buf, state->pInfcount);
+
+	/* nInfcount */
+	pq_sendint64(&buf, state->nInfcount);
+
+	result = pq_endtypsend(&buf);
+
+	PG_RETURN_BYTEA_P(result);
+}
+
+/*
+ * duration_avg_deserialize
+ *		Deserialize bytea into DurationAggState for duration aggregates.
+ */
+Datum
+duration_avg_deserialize(PG_FUNCTION_ARGS)
+{
+	bytea	   *sstate;
+	DurationAggState *result;
+	StringInfoData buf;
+
+	if (!AggCheckCallContext(fcinfo, NULL))
+		elog(ERROR, "aggregate function called in non-aggregate context");
+
+	sstate = PG_GETARG_BYTEA_PP(0);
+
+	/*
+	 * Initialize a StringInfo so that we can "receive" it using the standard
+	 * recv-function infrastructure.
+	 */
+	initReadOnlyStringInfo(&buf, VARDATA_ANY(sstate),
+						   VARSIZE_ANY_EXHDR(sstate));
+
+	result = (DurationAggState *) palloc0(sizeof(DurationAggState));
+
+	/* N */
+	result->N = pq_getmsgint64(&buf);
+
+	/* sumX */
+	result->sumX = pq_getmsgint64(&buf);
+
+	/* pInfcount */
+	result->pInfcount = pq_getmsgint64(&buf);
+
+	/* nInfcount */
+	result->nInfcount = pq_getmsgint64(&buf);
+
+	pq_getmsgend(&buf);
+
+	PG_RETURN_POINTER(result);
+}
+
+/*
+ * Inverse transition function for sum() and avg() duration aggregates.
+ */
+Datum
+duration_avg_accum_inv(PG_FUNCTION_ARGS)
+{
+	DurationAggState *state;
+
+	state = PG_ARGISNULL(0) ? NULL : (DurationAggState *) PG_GETARG_POINTER(0);
+
+	/* Should not get here with no state */
+	if (state == NULL)
+		elog(ERROR, "duration_avg_accum_inv called with NULL state");
+
+	if (!PG_ARGISNULL(1))
+		do_duration_discard(state, PG_GETARG_DURATION(1));
+
+	PG_RETURN_POINTER(state);
+}
+
+/* avg(duration) aggregate final function */
+Datum
+duration_avg(PG_FUNCTION_ARGS)
+{
+	DurationAggState *state;
+
+	state = PG_ARGISNULL(0) ? NULL : (DurationAggState *) PG_GETARG_POINTER(0);
+
+	/* If there were no non-null inputs, return NULL */
+	if (state == NULL || DA_TOTAL_COUNT(state) == 0)
+		PG_RETURN_NULL();
+
+	/*
+	 * Aggregating infinities that all have the same sign produces infinity
+	 * with that sign.  Aggregating infinities with different signs results in
+	 * an error.
+	 */
+	if (state->pInfcount > 0 || state->nInfcount > 0)
+	{
+		Duration	result;
+
+		if (state->pInfcount > 0 && state->nInfcount > 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("duration out of range")));
+
+		if (state->pInfcount > 0)
+			DURATION_NOEND(result);
+		else
+			DURATION_NOBEGIN(result);
+
+		PG_RETURN_DURATION(result);
+	}
+
+	return DirectFunctionCall2(duration_div,
+							   DurationGetDatum(state->sumX),
+							   Float8GetDatum((double) state->N));
+}
+
+/* sum(duration) aggregate final function */
+Datum
+duration_sum(PG_FUNCTION_ARGS)
+{
+	DurationAggState *state;
+	Duration	result;
+
+	state = PG_ARGISNULL(0) ? NULL : (DurationAggState *) PG_GETARG_POINTER(0);
+
+	/* If there were no non-null inputs, return NULL */
+	if (state == NULL || DA_TOTAL_COUNT(state) == 0)
+		PG_RETURN_NULL();
+
+	/*
+	 * Aggregating infinities that all have the same sign produces infinity
+	 * with that sign.  Aggregating infinities with different signs results in
+	 * an error.
+	 */
+	if (state->pInfcount > 0 && state->nInfcount > 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("duration out of range")));
+
+	if (state->pInfcount > 0)
+		DURATION_NOEND(result);
+	else if (state->nInfcount > 0)
+		DURATION_NOBEGIN(result);
+	else
+		result = state->sumX;
+
+	PG_RETURN_DURATION(result);
+}
+
+Datum
+duration_smaller(PG_FUNCTION_ARGS)
+{
+	Duration	a = PG_GETARG_DURATION(0);
+	Duration	b = PG_GETARG_DURATION(1);
+	int			cmp;
+	Duration	result;
+
+	cmp = DatumGetInt32(DirectFunctionCall2(duration_cmp, a, b));
+	result = cmp < 0 ? a : b;
+
+	PG_RETURN_DURATION(result);
+}
+
+Datum
+duration_larger(PG_FUNCTION_ARGS)
+{
+	Duration	a = PG_GETARG_DURATION(0);
+	Duration	b = PG_GETARG_DURATION(1);
+	int			cmp;
+	Duration	result;
+
+	cmp = DatumGetInt32(DirectFunctionCall2(duration_cmp, a, b));
+	result = cmp > 0 ? a : b;
 
 	PG_RETURN_DURATION(result);
 }

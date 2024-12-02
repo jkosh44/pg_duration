@@ -162,7 +162,7 @@ RETURNS numeric
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
--- Casts
+-- Cast methods
 
 CREATE FUNCTION duration_interval(duration)
 RETURNS interval
@@ -173,6 +173,80 @@ CREATE FUNCTION interval_duration(interval)
 RETURNS duration
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
+
+-- Aggregate methods
+
+CREATE FUNCTION duration_avg_accum(internal, duration)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE;
+
+COMMENT ON FUNCTION duration_avg_accum(internal, duration) IS
+'aggregate transition function';
+
+CREATE FUNCTION duration_avg_combine(internal, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE;
+
+COMMENT ON FUNCTION duration_avg_combine(internal, internal) IS
+'aggregate combine function';
+
+CREATE FUNCTION duration_avg_serialize(internal)
+RETURNS bytea
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+COMMENT ON FUNCTION duration_avg_serialize(internal) IS
+'aggregate serialize function';
+
+CREATE FUNCTION duration_avg_deserialize(bytea, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+COMMENT ON FUNCTION duration_avg_deserialize(bytea, internal) IS
+'aggregate deserialize function';
+
+CREATE FUNCTION duration_avg_accum_inv(internal, duration)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE;
+
+COMMENT ON FUNCTION duration_avg_accum_inv(internal, duration) IS
+'aggregate inverse transition function';
+
+CREATE FUNCTION duration_avg(internal)
+RETURNS duration
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE;
+
+COMMENT ON FUNCTION duration_avg(internal) IS
+'avg final function';
+
+CREATE FUNCTION duration_sum(internal)
+RETURNS duration
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE;
+
+COMMENT ON FUNCTION duration_avg(internal) IS
+'sum final function';
+
+CREATE FUNCTION duration_smaller(duration, duration)
+RETURNS duration
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+COMMENT ON FUNCTION duration_smaller(duration, duration) IS
+'min transition function';
+
+CREATE FUNCTION duration_larger(duration, duration)
+RETURNS duration
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+COMMENT ON FUNCTION duration_larger(duration, duration) IS
+'max transition function';
 
 -- Define duration type
 
@@ -309,3 +383,53 @@ CREATE CAST (duration AS interval)
 
 CREATE CAST (interval AS duration)
     WITH FUNCTION interval_duration(interval);
+
+-- Create aggregates
+
+CREATE AGGREGATE avg(duration)  (
+    SFUNC = duration_avg_accum,
+    STYPE = internal,
+    SSPACE = 32,
+    FINALFUNC = duration_avg,
+    COMBINEFUNC = duration_avg_combine,
+    SERIALFUNC = duration_avg_serialize,
+    DESERIALFUNC = duration_avg_deserialize,
+    MSFUNC = duration_avg_accum,
+    MINVFUNC = duration_avg_accum_inv,
+    MSTYPE = internal,
+    MSSPACE = 32,
+    MFINALFUNC = duration_avg,
+    PARALLEL = SAFE
+);
+
+CREATE AGGREGATE sum(duration)  (
+    SFUNC = duration_avg_accum,
+    STYPE = internal,
+    SSPACE = 32,
+    FINALFUNC = duration_sum,
+    COMBINEFUNC = duration_avg_combine,
+    SERIALFUNC = duration_avg_serialize,
+    DESERIALFUNC = duration_avg_deserialize,
+    MSFUNC = duration_avg_accum,
+    MINVFUNC = duration_avg_accum_inv,
+    MSTYPE = internal,
+    MSSPACE = 32,
+    MFINALFUNC = duration_sum,
+    PARALLEL = SAFE
+);
+
+CREATE AGGREGATE min(duration)  (
+    SFUNC = duration_smaller,
+    STYPE = duration,
+    SORTOP = <,
+    PARALLEL = SAFE,
+    COMBINEFUNC = duration_smaller
+);
+
+CREATE AGGREGATE max(duration)  (
+    SFUNC = duration_larger,
+    STYPE = duration,
+    SORTOP = >,
+    PARALLEL = SAFE,
+    COMBINEFUNC = duration_larger
+);
