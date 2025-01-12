@@ -723,113 +723,41 @@ SELECT f, d, date_trunc(f, d) FROM valid_fields, inf_table WHERE NOT isfinite(d)
 (10 rows)
 
 SELECT date_trunc('epoch', duration 'infinity');
- date_trunc 
-------------
- infinity
-(1 row)
-
+ERROR:  unit "epoch" not recognized for type duration
 SELECT date_trunc('millennium', duration 'infinity');
- date_trunc 
-------------
- infinity
-(1 row)
-
+ERROR:  unit "millennium" not supported for type duration
 SELECT date_trunc('century', duration 'infinity');
- date_trunc 
-------------
- infinity
-(1 row)
-
+ERROR:  unit "century" not supported for type duration
 SELECT date_trunc('decade', duration 'infinity');
- date_trunc 
-------------
- infinity
-(1 row)
-
+ERROR:  unit "decade" not supported for type duration
 SELECT date_trunc('year', duration 'infinity');
- date_trunc 
-------------
- infinity
-(1 row)
-
+ERROR:  unit "year" not supported for type duration
 SELECT date_trunc('quarter', duration 'infinity');
- date_trunc 
-------------
- infinity
-(1 row)
-
+ERROR:  unit "quarter" not supported for type duration
 SELECT date_trunc('month', duration 'infinity');
- date_trunc 
-------------
- infinity
-(1 row)
-
+ERROR:  unit "month" not supported for type duration
 SELECT date_trunc('week', duration 'infinity');
- date_trunc 
-------------
- infinity
-(1 row)
-
+ERROR:  unit "week" not supported for type duration
 SELECT date_trunc('day', duration 'infinity');
- date_trunc 
-------------
- infinity
-(1 row)
-
+ERROR:  unit "day" not supported for type duration
 SELECT date_trunc('epoch', duration '-infinity');
- date_trunc 
-------------
- -infinity
-(1 row)
-
+ERROR:  unit "epoch" not recognized for type duration
 SELECT date_trunc('millennium', duration '-infinity');
- date_trunc 
-------------
- -infinity
-(1 row)
-
+ERROR:  unit "millennium" not supported for type duration
 SELECT date_trunc('century', duration '-infinity');
- date_trunc 
-------------
- -infinity
-(1 row)
-
+ERROR:  unit "century" not supported for type duration
 SELECT date_trunc('decade', duration '-infinity');
- date_trunc 
-------------
- -infinity
-(1 row)
-
+ERROR:  unit "decade" not supported for type duration
 SELECT date_trunc('year', duration '-infinity');
- date_trunc 
-------------
- -infinity
-(1 row)
-
+ERROR:  unit "year" not supported for type duration
 SELECT date_trunc('quarter', duration '-infinity');
- date_trunc 
-------------
- -infinity
-(1 row)
-
+ERROR:  unit "quarter" not supported for type duration
 SELECT date_trunc('month', duration '-infinity');
- date_trunc 
-------------
- -infinity
-(1 row)
-
+ERROR:  unit "month" not supported for type duration
 SELECT date_trunc('week', duration '-infinity');
- date_trunc 
-------------
- -infinity
-(1 row)
-
+ERROR:  unit "week" not supported for type duration
 SELECT date_trunc('day', duration '-infinity');
- date_trunc 
-------------
- -infinity
-(1 row)
-
+ERROR:  unit "day" not supported for type duration
 -- date_part
 SELECT f, d, date_part(f, d) FROM valid_fields, inf_table WHERE NOT isfinite(d);
       f      |     d     | date_part 
@@ -997,7 +925,6 @@ ERROR:  duration out of range
 SELECT sum(d) FROM inf_table;
 ERROR:  duration out of range
 -- Overflow
--- This matches PostgreSQL semantics, but is probably incorrect.
 SELECT duration '9223372036854775807 us';
  duration 
 ----------

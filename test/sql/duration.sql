@@ -349,7 +349,6 @@ SELECT max(d), min(d) FROM inf_table;
 SELECT avg(d) FROM inf_table;
 SELECT sum(d) FROM inf_table;
 -- Overflow
--- This matches PostgreSQL semantics, but is probably incorrect.
 SELECT duration '9223372036854775807 us';
 SELECT duration '-9223372036854775808 us';
 
