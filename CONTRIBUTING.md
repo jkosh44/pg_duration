@@ -23,3 +23,13 @@ should model our implementations after the existing `interval` implementations.
 We could have been more aggressive in converting durations to intervals, calling the interval function, and converting
 back to durations instead of re-implementing functionality. However, we would have to allocate an extra 128 bits for
 each duration which would add necessary overhead.
+
+## Releases
+
+To create a new release of `pg_duration`, follow the instructions below:
+
+1. Update the version numbers in `META.json` (two places) and `pg_duration.control`.
+2. Run `make dist` which will produce a `pg_duration-x.y.z.zip` archive.
+3. Upload the zip file at [pgxn](https://manager.pgxn.org/upload).
+
+See the [how-to](https://manager.pgxn.org/howto) guide for more information.

@@ -1,7 +1,7 @@
 {
     "name": "pg_duration",
     "abstract": "A duration data type",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "maintainer": "Joseph Koshakow <koshy44@gmail.com.com>",
     "license": "postgresql",
     "provides": {
@@ -9,7 +9,7 @@
           "abstract": "A duration data type",
           "file": "sql/pg_duration--1.0.sql",
           "docfile": "doc/pg_duration.md",
-          "version": "1.0.1"
+          "version": "1.0.2"
        }
     },
     "resources": {
