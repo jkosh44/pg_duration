@@ -7,7 +7,7 @@ To execute all tests run:
 ```bash
 make
 make install
-mask installcheck
+make installcheck
 ```
 
 You must have a running PostgreSQL server and the default user must have `LOGIN` and `SUPERUSER` privileges.

@@ -722,12 +722,6 @@ duration_trunc(PG_FUNCTION_ARGS)
 	struct pg_itm tt,
 			   *tm = &tt;
 
-	if (DURATION_NOT_FINITE(duration))
-	{
-		result = duration;
-		PG_RETURN_DURATION(result);
-	}
-
 	lowunits = downcase_truncate_identifier(VARDATA_ANY(units),
 											VARSIZE_ANY_EXHDR(units),
 											false);
@@ -736,6 +730,33 @@ duration_trunc(PG_FUNCTION_ARGS)
 
 	if (type == UNITS)
 	{
+		if (DURATION_NOT_FINITE(duration))
+		{
+			/*
+			 * Errors thrown here for invalid units should exactly match those
+			 * below, else there will be unexpected discrepancies between
+			 * finite- and infinite-input cases.
+			 */
+			switch (val)
+			{
+				case DTK_HOUR:
+				case DTK_MINUTE:
+				case DTK_SECOND:
+				case DTK_MILLISEC:
+				case DTK_MICROSEC:
+					result = duration;
+					PG_RETURN_DURATION(result);
+					break;
+
+				default:
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("unit \"%s\" not supported for type duration",
+									lowunits)));
+					result = 0;
+			}
+		}
+
 		duration2itm(duration, tm);
 		switch (val)
 		{
